@@ -13,6 +13,5 @@ Extending the standard 3x3 tic tac toe to a 9x9 version with new rules.
 - [ ] Define Code structure
 - [ ] Code the new version
 - [ ] Add sounds and text
-- [ ] Deploy
 - [ ] Upgrade Graphics
 - [ ] Done
