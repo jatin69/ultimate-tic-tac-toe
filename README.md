@@ -6,6 +6,7 @@ Extending the standard 3x3 tic tac toe to a 9x9 version with new rules.
 ## Todo List
 
 - [X] Add a 3x3 prototype
+- [ ] Deploy Prototype to heroku
 - [ ] Document the prototype
 - [ ] Define rules for new version
 - [ ] Define features
