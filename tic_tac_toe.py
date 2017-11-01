@@ -4,30 +4,45 @@ from pygame.locals import *
 # CONSTANTS, yo
 
 # Game window width and height
-WINDOWWIDTH = 900
-WINDOWHEIGHT = 700
+WINDOWWIDTH = 400
+WINDOWHEIGHT = 500
 
 # The infinite loops runs 30 times in one second
 FPS = 30
 
-
 # How big should be one small box
-BOXSIZE = 50
+# when you modify this, also modify the main font, as the X lives inside a box
+BOXSIZE = 100
 
 # Width of the line in pixels : This is the thing that actually separate the input small boxes
-GAPSIZE = 2
-
+GAPSIZE = 5
 
 # Playing board width : How many small boxes needs to fit in the board
-BOARDWIDTH = 9
-BOARDHEIGHT = 9
+BOARDWIDTH = 3
+BOARDHEIGHT = 3
 
-
+# TEXT Markers to be drawn
 XMARK = 'X'
 OMARK = 'O'
+
+'''
+Board size = BOXSIZE + GAPSIZE
+# The BOARD IS SQUARE. so same size in width and height.
+
+remaining space on X axis = (Window width - Board size)
+Margin on X axis = remaining space on X axis // 2
+
+remaining space on Y axis = (Window height - Board size)
+Margin on Y axis = remaining space on Y axis // 2
+
+Note that these margins are coordinates
+
+'''
+
 XMARGIN = int((WINDOWWIDTH -(BOARDWIDTH * (BOXSIZE + GAPSIZE)))/2)
 YMARGIN = int((WINDOWHEIGHT - (BOARDHEIGHT * (BOXSIZE + GAPSIZE)))/2)
 
+# RGB COLOUR MODEL
 #            R    G    B
 GRAY     = (100, 100, 100)
 NAVYBLUE = ( 60,  60, 100)
@@ -42,81 +57,158 @@ CYAN     = (  0, 255, 255)
 BLACK    = (  0,   0,   0)
 COMBLUE  = (233, 232, 255)
 
+
+# GAME COLOURS
+
+# Background Color
 BGCOLOR = BLACK
-BOXCOLOR = BGCOLOR
-LINECOLOR = COMBLUE
+
+# BOX color - UNUSED AS OF NOW
+BOXCOLOR = BLUE
+
+# The line which joins 3 consecutive elements at the end
+LINECOLOR = YELLOW
+
 
 def main():
-    global FPSCLOCK, DISPLAYSURF
-    pygame.init()
-    FPSCLOCK = pygame.time.Clock()
-    DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
 
+    global FPSCLOCK, DISPLAYSURFACE
+
+    # Initialise the library my friend
+    pygame.init()
+
+    # Hold the clock as a variable - to tick later : controls the loop iterations per second.
+    FPSCLOCK = pygame.time.Clock()
+
+    # The Surface over which everything will be drawn - Window width and height
+    DISPLAYSURFACE = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
+
+    # mainFont : Font for drawing X and O in the boxes
+    # Modification required : Remove magic number & put something relative to box
     mainFont = pygame.font.SysFont('Helvetica', 90)
+
+    # smallFont : draws the score box and the end game credits
     smallFont = pygame.font.SysFont('Helvetica', 25)
 
-    mousex = 0
-    mousey = 0
+    # Caption of window
     pygame.display.set_caption('Tic-Tac-Toe')
 
+    # Mouse coordinates
+    mousex = 0
+    mousey = 0
+
+    # score board variables
     playerScore = 0
     computerScore = 0
     tieScore = 0
     playerWins = False
     computerWins = False
 
+    # sounds
+    # sound of Player move
     BEEP1 = pygame.mixer.Sound('beep2.ogg')
+    # sound of computer move
     BEEP2 = pygame.mixer.Sound('beep3.ogg')
+
+    # Winning sound of any player
     BEEP3 = pygame.mixer.Sound('beep1.ogg')
+
+    # computer voice at the end of game
     COMPUTERVOICE = pygame.mixer.Sound('wargamesclip.ogg')
 
+    '''
+    Defines the major data structure 
+    The whole Board is a list of list.  [ [col1], [col2], [col3] ]
+    The function makeEachBoxFalse() returns a list of all false boxes
+    '''
+    # Main board variable
     mainBoard = makeEachBoxFalse(False)
+    # Initially used boxes
     usedBoxes = makeEachBoxFalse(False)
 
+    # Player turn : bool variable
     playerTurnDone = False
 
-    DISPLAYSURF.fill(BGCOLOR)
+    # Paint the surface black
+    DISPLAYSURFACE.fill(BGCOLOR)
+
+    '''
+    Draw all the required lines
+    '''
     drawLines()
 
+    # The GRAND game loop
     while True:
-        
-        mouseClicked = False
-        
 
+        # set mouseClick as False
+        mouseClicked = False
+
+        # Check for events for event queue
         for event in pygame.event.get():
+
+            # For Game exiting
             if event.type == QUIT or (event.type == KEYUP and event.key == K_ESCAPE):
                 pygame.quit()
                 sys.exit()
 
+            # If mouse is moving, update the location
             elif event.type == MOUSEMOTION:
                 mousex, mousey = event.pos
+
+            # If mouse button just came up, it means the button is clicked
             elif event.type == MOUSEBUTTONUP:
                 mousex, mousey = event.pos
                 mouseClicked = True
 
+        '''
+        @:purpose : when mouse is clicked, we need to put X or O at the correct box
+        So to obtain the exact box where the mouse is clicked, this function is used.
+        @:returns: The box coordinates, where mouse is clicked
+        '''
         boxx, boxy = getBoxAtPixel(mousex, mousey)
+
+
+        # If Inside the board, move forward, else ignore
         if boxx != None and boxy != None:
 
-            if not usedBoxes[boxx][boxy] and mouseClicked and playerTurnDone == False:
+            # If box is not already used, & mouse if clicked just now, move forward
+            if not usedBoxes[boxx][boxy] and mouseClicked and playerTurnDone is False:
+                # DRAW X
                 markBoxX(boxx, boxy, mainFont)
+                # Play sound
                 BEEP1.play()
+
+                # set true to used Boxes
                 usedBoxes[boxx][boxy] = True
+                # Mark mainboard
                 mainBoard[boxx][boxy] = XMARK
+                # Player turn done
                 playerTurnDone = True
+
+                # Update display - early update
+                # Needs update, or the last iteration isn't displayed.
+                # Further, to solve this issue, we could extend one iteration,
+                # But this approach is also cool, so good
                 pygame.display.update()
 
-
+            # If computer turn, play the move
             elif playerTurnDone == True:
+                # a little delay - time pause for 500 ms
                 pygame.time.wait(500)
+                # derive the boxes to be marked with AI
                 boxx, boxy = computerTurnWithAI(usedBoxes, mainBoard)
+
+                # mark box, play sound
                 markBoxO(boxx, boxy, mainFont)
                 BEEP2.play()
+                # update tables
                 usedBoxes[boxx][boxy] = True
                 mainBoard[boxx][boxy] = OMARK
+                # next is player turn
                 playerTurnDone = False
                 pygame.display.update()
 
-        
+        # Check if anyone won the game, after the previous move
         playerWins, computerWins = gameWon(mainBoard)
 
         if playerWins:
@@ -126,7 +218,7 @@ def main():
             pygame.display.update()
             playerScore += 1
             usedBoxes, mainBoard, playerTurnDone, playerWins, computerWins = boardReset(usedBoxes, mainBoard, playerTurnDone, playerWins, computerWins)
-            DISPLAYSURF.fill(BGCOLOR)
+            DISPLAYSURFACE.fill(BGCOLOR)
             drawLines()
             
         elif computerWins:
@@ -136,18 +228,18 @@ def main():
             pygame.display.update()
             computerScore += 1
             usedBoxes, mainBoard, playerTurnDone, playerWins, computerWins = boardReset(usedBoxes, mainBoard, playerTurnDone, playerWins, computerWins)
-            DISPLAYSURF.fill(BGCOLOR)
+            DISPLAYSURFACE.fill(BGCOLOR)
             drawLines()
 
         else:
             if gameOver(usedBoxes, mainBoard):
                 tieScore += 1
                 usedBoxes, mainBoard, playerTurnDone, playerWins, computerWins = boardReset(usedBoxes, mainBoard, playerTurnDone, playerWins, computerWins)
-                DISPLAYSURF.fill(BGCOLOR)
+                DISPLAYSURFACE.fill(BGCOLOR)
                 drawLines()
 
-        if tieScore >= 1:
-            DISPLAYSURF.fill(BGCOLOR)
+        if tieScore >= 2:
+            DISPLAYSURFACE.fill(BGCOLOR)
             pygame.display.update()
             pygame.time.wait(1000)
             warGameEnding(smallFont, COMPUTERVOICE)
@@ -156,7 +248,7 @@ def main():
             tieScore = 0
             playerScore = 0
             computerScore = 0
-            DISPLAYSURF.fill(BGCOLOR)
+            DISPLAYSURFACE.fill(BGCOLOR)
             drawLines()
 
         
@@ -165,13 +257,20 @@ def main():
         
                 
 
+        # Render the updated graphics on screen
         pygame.display.update()
+
+        # Tick the CLOCK
         FPSCLOCK.tick(FPS)
 
-       
 
 
 ###### Functions to set up the board  #########
+
+'''
+@objective : draw the lines that appear in the main board
+@usage     : This function will be used to draw 9 lines
+'''
 
 
 def drawLines():
@@ -180,34 +279,66 @@ def drawLines():
     
     left = XMARGIN + BOXSIZE
     top = YMARGIN
+
+    # How wide is the vertical line
     width = GAPSIZE
+    # height : How thick is the vertical line
     height = (BOXSIZE + GAPSIZE) * BOARDHEIGHT
-    
+
+    #  vertical rectangle needs to be drawn from top
     vertRect1 = pygame.Rect(left, top, width, height)
-    pygame.draw.rect(DISPLAYSURF, WHITE, vertRect1)
+    pygame.draw.rect(DISPLAYSURFACE, WHITE, vertRect1)
 
+    #  horizontal rectangle needs to be drawn from beside the first box
     vertRect2 = pygame.Rect(left + BOXSIZE + GAPSIZE, top, width, height)
-    pygame.draw.rect(DISPLAYSURF, WHITE, vertRect2)
+    pygame.draw.rect(DISPLAYSURFACE, WHITE, vertRect2)
 
+    '''
+    The Thing i do not understand is why only one side of rectange is visible
+    '''
+    '''
+    vertRect3 = pygame.Rect(left + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE, top, width, height)
+    pygame.draw.rect(DISPLAYSURFACE, WHITE, vertRect3)
+    '''
 
     ########HORIZONTAL LINES ##########
 
-    left = XMARGIN
-    top = YMARGIN + BOXSIZE
-    width = (BOXSIZE + GAPSIZE) * BOARDWIDTH
-    height = GAPSIZE
-    
-    horizRect1 = pygame.Rect(left, top, width, height)
-    pygame.draw.rect(DISPLAYSURF, WHITE, horizRect1)
+    # need to draw horizontal lines
 
+    # left side distance = XMARGIN
+    left = XMARGIN
+
+    # Top distance is = YMARGIN + (for skipping the first box) BOXSIZE
+    top = YMARGIN + BOXSIZE
+
+    # How wide is the vertical line
+    width = (BOXSIZE + GAPSIZE) * BOARDWIDTH
+    # height : How thick is the horizontal line
+    height = GAPSIZE
+
+    #  horizontal rectangle needs to be drawn from top
+    horizRect1 = pygame.Rect(left, top, width, height)
+    pygame.draw.rect(DISPLAYSURFACE, WHITE, horizRect1)
+
+    #  horizontal rectangle needs to be drawn from below the first box
     horizRect2 = pygame.Rect(left, top + BOXSIZE + GAPSIZE, width, height)
-    pygame.draw.rect(DISPLAYSURF, WHITE, horizRect2)
+    pygame.draw.rect(DISPLAYSURFACE, WHITE, horizRect2)
+
+
+'''
+@Objective : converts each box in the Board to FALSE
+@Approach  : each each element of row, make all the boxes in its column FALSE
+@Note : The Box is list of lists. 
+For each Row one sublist, one sublist represents columns
+'''
 
 
 def makeEachBoxFalse(val):
     usedBoxes = []
     for i in range(BOARDWIDTH):
+        # append a list
         usedBoxes.append([val] * BOARDHEIGHT)
+    # Return a list of lists
     return usedBoxes
 
 
@@ -216,7 +347,7 @@ def drawScoreBoard(smallFont, playerScore, computerScore, tieScore):
     scoreBoardRect = scoreBoard.get_rect()
     scoreBoardRect.x = 0
     scoreBoardRect.y = 0
-    DISPLAYSURF.blit(scoreBoard, scoreBoardRect)
+    DISPLAYSURFACE.blit(scoreBoard, scoreBoardRect)
 
 
 
@@ -226,19 +357,49 @@ def drawScoreBoard(smallFont, playerScore, computerScore, tieScore):
 
 ##### Coordinate Functions #####
 
+'''
+@function name : getBoxAtPixel
+@purpose : Return the box where pixel(x,y) lie
+@approach : 
+Iterate over each possible SMALL BOX, derive its top left coordinates
+
+>>> AMAZING FUNCTION - core of it all
+'''
+
+
 def getBoxAtPixel(x, y):
     for boxx in range(BOARDWIDTH):
         for boxy in range(BOARDHEIGHT):
             left, top = leftTopCoordsOfBox(boxx, boxy)
+            # Draw a rectangle from top left coordinate of the box
+            # If made box and mouse pixel intersect, we found it right
             boxRect = pygame.Rect(left, top, BOXSIZE, BOXSIZE)
             if boxRect.collidepoint(x, y):
                 return (boxx, boxy)
     return (None, None)
 
+
+'''
+@:function : leftTopCoordsOfBox
+@:returns : The top left coordinates of a Small BOX
+@:approach : absolute pixel = X Margin + (box size + width) * box number
+
+'''
+
+
 def leftTopCoordsOfBox(boxx, boxy):
-    left = boxx *(BOXSIZE + GAPSIZE) + XMARGIN
+    left = boxx * (BOXSIZE + GAPSIZE) + XMARGIN
     top = boxy * (BOXSIZE + GAPSIZE) + YMARGIN
     return left, top
+
+
+'''
+@:function : centerxAndCenteryOfBox
+@:returns : center coordinates of a Small BOX
+@:approach : find the top left, then add half the box from both sides
+Minor note : a little extra on y side, because i want the X/O a lil down
+'''
+
 
 
 def centerxAndCenteryOfBox(boxx, boxy):
@@ -256,14 +417,49 @@ def centerxAndCenteryOfBox(boxx, boxy):
 
 ##### Functions dealing with computer and player moves ######
 
+'''
+Functions to mark X and O in the main board
+approach : 
+1. render the mark surface from X
+2. Obtain its rectangle
+3. relocate the rectangle to correct small box
+4. BLIZ the original mark over this relocated rectangle
+'''
+
 
 def markBoxX(boxx, boxy, mainFont):
-    centerx, centery = centerxAndCenteryOfBox(boxx, boxy)
+    '''
+    This creates a new Surface with the specified text rendered on it. 
+    pygame provides no way to directly draw text on an existing Surface:
+    instead you must use Font.render() to create an image (Surface) of the text, 
+    then blit this image onto another Surface.
+    '''
+    # Use Main Font to - render Xmark on a new surface
     mark = mainFont.render(XMARK, True, WHITE)
+    '''
+    Surfaces don't have a position, so you have to store the blit position in the rect. 
+    When you call the get_rect method of a pygame.Surface, Pygame creates a new rect
+    with the size of the surface with coordinates (x,y)=(0,0). 
+    '''
+    # Obtain the rectangle object of surface.
     markRect = mark.get_rect()
+
+    # find center of small box
+    centerx, centery = centerxAndCenteryOfBox(boxx, boxy)
+
+    # update the center = to center of the current box, so that TEXT appears inside box
+    # Interesting Note : pygame re calculates the top and left automatically, when i change the center
     markRect.centerx = centerx
     markRect.centery = centery
-    DISPLAYSURF.blit(mark, markRect)
+
+    # BLIT(source,destination)
+    DISPLAYSURFACE.blit(mark, markRect)
+
+
+'''
+Function : markBoxO
+Approach : Exactly same as markBoxX
+'''
 
 
 def markBoxO(boxx, boxy, mainFont):
@@ -272,7 +468,13 @@ def markBoxO(boxx, boxy, mainFont):
     markRect = mark.get_rect()
     markRect.centerx = centerx
     markRect.centery = centery
-    DISPLAYSURF.blit(mark, markRect)
+    DISPLAYSURFACE.blit(mark, markRect)
+
+
+'''
+@:Function : computerTurnWithAI
+@: Objective : The smart AI
+'''
 
 
 def computerTurnWithAI(usedBoxes, mainBoard):
@@ -417,9 +619,16 @@ def computerTurnWithAI(usedBoxes, mainBoard):
 
 
 
-##### Functions dealing with an end of game ########       
+##### Functions dealing with an end of game ########
+
+'''
+Function : gameWon()
+Purpose: Checks all the 8 scenarios of game winning and return the winner, if any
+'''
 
 def gameWon(mainBoard):
+
+    # Player win by consecutive X mark
     if ((mainBoard[0][0] == mainBoard[1][0] == mainBoard[2][0] == XMARK) or
         (mainBoard[0][1] == mainBoard[1][1] == mainBoard[2][1] == XMARK) or
         (mainBoard[0][2] == mainBoard[1][2] == mainBoard[2][2] == XMARK) or
@@ -432,8 +641,8 @@ def gameWon(mainBoard):
         playerWins = True
         computerWins = False
         return playerWins, computerWins
-    
-    
+
+    # Computer win by consecutive O mark
     elif ((mainBoard[0][0] == mainBoard[1][0] == mainBoard[2][0] == OMARK) or
           (mainBoard[0][1] == mainBoard[1][1] == mainBoard[2][1] == OMARK) or
           (mainBoard[0][2] == mainBoard[1][2] == mainBoard[2][2] == OMARK) or
@@ -447,12 +656,21 @@ def gameWon(mainBoard):
         computerWins = True
         return playerWins, computerWins
 
-    
+    # No one won
     else:
         playerWins = False
         computerWins = False
         return playerWins, computerWins
 
+
+'''
+@:Function : gameOver
+@:purpose: checks is the game is over - no space left to move
+@:approach : If any one the boxes from used boxes is false, it means its not has been used.
+Means, Board has still space left, return false to game over
+
+If no space left, it is a game over
+'''
 
 def gameOver(usedBoxes, mainBoard):
     for boxx in range(BOARDWIDTH):
@@ -524,63 +742,63 @@ def highLightBoxes(mainBoard, scenario):
         endPos = (XMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2), YMARGIN + (BOXSIZE/2))
         
 
-        pygame.draw.line(DISPLAYSURF, LINECOLOR, startPos, endPos, 10)
+        pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
 
     elif scenario == 2:
         startPos = (XMARGIN + (BOXSIZE/2), YMARGIN + BOXSIZE + GAPSIZE + (BOXSIZE/2))
         endPos = (XMARGIN + (BOXSIZE/2) + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE, YMARGIN + BOXSIZE + GAPSIZE + (BOXSIZE/2))
 
 
-        pygame.draw.line(DISPLAYSURF, LINECOLOR, startPos, endPos, 10)
+        pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
 
     elif scenario == 3:
         startPos = (XMARGIN + (BOXSIZE/2), YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2))
         endPos = (XMARGIN + (BOXSIZE/2) + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE, YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2))
 
 
-        pygame.draw.line(DISPLAYSURF, LINECOLOR, startPos, endPos, 10)
+        pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
 
     elif scenario == 4:
         startPos = (XMARGIN + (BOXSIZE/2), YMARGIN + (BOXSIZE/2))
         endPos = (XMARGIN + (BOXSIZE/2), YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2))
         
 
-        pygame.draw.line(DISPLAYSURF, LINECOLOR, startPos, endPos, 10)
+        pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
 
     elif scenario == 5:
         startPos = (XMARGIN + BOXSIZE + GAPSIZE + (BOXSIZE/2), YMARGIN + (BOXSIZE/2))
         endPos = (XMARGIN + BOXSIZE + GAPSIZE + (BOXSIZE/2), YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2))
         
 
-        pygame.draw.line(DISPLAYSURF, LINECOLOR, startPos, endPos, 10)
+        pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
 
     elif scenario == 6:
         startPos = (XMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2), YMARGIN + (BOXSIZE/2))
         endPos = (XMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2), YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2))
         
 
-        pygame.draw.line(DISPLAYSURF, LINECOLOR, startPos, endPos, 10)
+        pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
 
     elif scenario == 7:
         startPos = (XMARGIN + (BOXSIZE/2), YMARGIN + (BOXSIZE/2))
         endPos = (XMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2), YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2))
 
         
-        pygame.draw.line(DISPLAYSURF, LINECOLOR, startPos, endPos, 10)
+        pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
 
     elif scenario == 8:
         startPos = (XMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2), YMARGIN + (BOXSIZE/2))
         endPos = (XMARGIN + (BOXSIZE/2), YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2))
         
 
-        pygame.draw.line(DISPLAYSURF, LINECOLOR, startPos, endPos, 10)
+        pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
     
         
 
 def warGameEnding(smallFont, COMPUTERVOICE):
     COMPUTERVOICE.play()
-    surfRect = DISPLAYSURF.get_rect()
-    DISPLAYSURF.fill(BGCOLOR)
+    surfRect = DISPLAYSURFACE.get_rect()
+    DISPLAYSURFACE.fill(BGCOLOR)
 
     computerMessage1 = smallFont.render('A strange game...', True, COMBLUE, BGCOLOR)
     computerMessage1Rect = computerMessage1.get_rect()
@@ -611,8 +829,8 @@ def uncoverWords(text, textRect):
     
 
     for i in range((textLength // revealSpeed) + 1):
-        DISPLAYSURF.blit(text, textRect)
-        pygame.draw.rect(DISPLAYSURF, BLACK, blackRect)
+        DISPLAYSURFACE.blit(text, textRect)
+        pygame.draw.rect(DISPLAYSURFACE, BLACK, blackRect)
         pygame.display.update()
 
         blackRect.x += revealSpeed
@@ -624,7 +842,3 @@ def uncoverWords(text, textRect):
 if __name__ == '__main__':
     main()
 
-
-
-
-    
