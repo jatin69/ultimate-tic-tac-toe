@@ -6,8 +6,8 @@ Extending the standard 3x3 tic tac toe to a 9x9 version with new rules.
 ## Todo List
 
 - [X] Add a 3x3 prototype
-- [ ] Document the prototype
-
+- [X] Document the prototype
+- [ ] Refer books, gain more pygame knowledge 
 - [ ] Define rules for new extended version
 - [ ] Define graphics
 - [ ] Define features - levels - Beginner & Pro

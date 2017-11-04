@@ -195,8 +195,11 @@ def main():
             elif playerTurnDone == True:
                 # a little delay - time pause for 500 ms
                 pygame.time.wait(500)
+
+
                 # derive the boxes to be marked with AI
                 boxx, boxy = computerTurnWithAI(usedBoxes, mainBoard)
+                # AI processed.
 
                 # mark box, play sound
                 markBoxO(boxx, boxy, mainFont)
@@ -211,6 +214,7 @@ def main():
         # Check if anyone won the game, after the previous move
         playerWins, computerWins = gameWon(mainBoard)
 
+        # If player won, highlight the boxes, play sound, reset board for next turn
         if playerWins:
             pygame.time.wait(500)
             highlightWin(mainBoard)
@@ -228,6 +232,7 @@ def main():
             pygame.display.update()
             computerScore += 1
             usedBoxes, mainBoard, playerTurnDone, playerWins, computerWins = boardReset(usedBoxes, mainBoard, playerTurnDone, playerWins, computerWins)
+            # IMPORTANT
             DISPLAYSURFACE.fill(BGCOLOR)
             drawLines()
 
@@ -238,12 +243,16 @@ def main():
                 DISPLAYSURFACE.fill(BGCOLOR)
                 drawLines()
 
-        if tieScore >= 2:
+        # Time to END THE GAME
+        if tieScore >= 1:
             DISPLAYSURFACE.fill(BGCOLOR)
             pygame.display.update()
             pygame.time.wait(1000)
+            # end game credits
             warGameEnding(smallFont, COMPUTERVOICE)
             pygame.display.update()
+
+            # RESET BOARD
             usedBoxes, mainBoard, playerTurnDone, playerWins, computerWins = boardReset(usedBoxes, mainBoard, playerTurnDone, playerWins, computerWins)
             tieScore = 0
             playerScore = 0
@@ -474,13 +483,29 @@ def markBoxO(boxx, boxy, mainFont):
 '''
 @:Function : computerTurnWithAI
 @: Objective : The smart AI
+@: approach : 
+1. check if AI can win with this move
+2. check if Player can win with his next move, block that move
+- IF BOTH SAFE, PROCEED -
+3. Occupy center
+4. Check if there is a fork ( a probable path leading to 2 winning situations )
+5. occupy corners
+6. occupy sides
+
 '''
 
 
 def computerTurnWithAI(usedBoxes, mainBoard):
 
     ## Step 1: Check to see if there is a winning move ##
-    
+    '''
+
+    :param usedBoxes: a list of currently used boxes
+    :param mainBoard: The main board
+    :return: the AI move
+    :approach: For each un-used box, play the AI move(O), and see if we can win
+    '''
+
     for boxx in range(BOARDWIDTH):
         for boxy in range(BOARDHEIGHT):
             mainBoardCopy = copy.deepcopy(mainBoard)
@@ -495,6 +520,9 @@ def computerTurnWithAI(usedBoxes, mainBoard):
 
 
     ## Step 2: Check to see if there is a potential win that needs to be blocked ##
+    '''
+    :approach: For each un-used box, play the player move (X), and see if we can win
+    '''
     
     for boxx in range(BOARDWIDTH):
         for boxy in range(BOARDWIDTH):
@@ -507,24 +535,26 @@ def computerTurnWithAI(usedBoxes, mainBoard):
                     return boxx, boxy
 
 
-
-
     ## Step 3: Check if the center is empty ##
-
+    # center is located at 1,1
     mainBoardCopy = copy.deepcopy(mainBoard)
 
     if mainBoardCopy[1][1] == False:
         return 1, 1
 
-    
-
 
     ## Step 4: Prevent a potential fork ##
+    '''
+    A fork is a potential move  resulting in two winning situations
+    2 distance fork
+    1 distance fork
+    '''
 
     if ((mainBoardCopy[0][0] == mainBoardCopy[2][2] == XMARK) or
         (mainBoardCopy[0][2] == mainBoardCopy[2][0] == XMARK)):
         if mainBoardCopy[1][2] == False:
             return 1, 2
+
 
     if mainBoard[1][0] == XMARK:
         if mainBoard[0][1] == XMARK:
@@ -586,7 +616,7 @@ def computerTurnWithAI(usedBoxes, mainBoard):
     
                             
 
-
+    # if any corener is empty , grab it
 
     ## Step 5: Check if a corner is open ##
     
@@ -604,6 +634,7 @@ def computerTurnWithAI(usedBoxes, mainBoard):
     
 
 
+    # any side which is empty
 
     ## Step 6: Check if a side is open ##
 
@@ -682,6 +713,9 @@ def gameOver(usedBoxes, mainBoard):
         return True
 
 
+'''
+Resets the game
+'''
 def boardReset(usedBoxes, mainBoard, playerTurnDone, playerWins, computerWins):
     pygame.time.wait(1000)
     usedBoxes = makeEachBoxFalse(False)
@@ -693,6 +727,13 @@ def boardReset(usedBoxes, mainBoard, playerTurnDone, playerWins, computerWins):
 
 
 def highlightWin(mainBoard):
+    '''
+
+    :param mainBoard: Highlights the winning situation
+    :return:
+
+    #Note: Can be highly optimised if i pass around the winning boxes
+    '''
 
     scenario1 = 1
     scenario2 = 2
@@ -734,7 +775,13 @@ def highlightWin(mainBoard):
     elif mainBoard[2][0] == mainBoard[1][1] == mainBoard[0][2]:
         highLightBoxes(mainBoard, scenario8)
 
+'''
+@:Objective : Draws a line after someone won
+@approach :
+Handles each win case separately with magic numbers
 
+NOTE : Remove magic numbers
+'''
 def highLightBoxes(mainBoard, scenario):
 
     if scenario == 1:
@@ -800,11 +847,14 @@ def warGameEnding(smallFont, COMPUTERVOICE):
     surfRect = DISPLAYSURFACE.get_rect()
     DISPLAYSURFACE.fill(BGCOLOR)
 
+    # Render text
     computerMessage1 = smallFont.render('A strange game...', True, COMBLUE, BGCOLOR)
+    # Shift its rectangle to the position where you want the text
     computerMessage1Rect = computerMessage1.get_rect()
     computerMessage1Rect.x = XMARGIN/3
     computerMessage1Rect.y = YMARGIN * 2
 
+    # uncover the words - draw computerMessage1 inside rectangle computerMessage1Rect
     uncoverWords(computerMessage1, computerMessage1Rect)
     pygame.time.wait(1000)
         
@@ -821,18 +871,26 @@ def warGameEnding(smallFont, COMPUTERVOICE):
 
 
 def uncoverWords(text, textRect):
+    # Copy the rectangle
     textRectCopy = copy.deepcopy(textRect)
+
+    # Un necessary -- made copy because changes made while reveal speed
     blackRect = textRectCopy
+
+    # Text is as wide as rectangle width ( of a rectangle which was originally derived from this text only )
     textLength = textRect.width
 
-    revealSpeed = 5
-    
+    # Revealing speed for text
+    revealSpeed = 1
 
+    # steps required to reveal whole text
     for i in range((textLength // revealSpeed) + 1):
+        # draw text
         DISPLAYSURFACE.blit(text, textRect)
+        # Draw a black rectangle over text
         pygame.draw.rect(DISPLAYSURFACE, BLACK, blackRect)
         pygame.display.update()
-
+        # Move the black triangle slowly away
         blackRect.x += revealSpeed
         blackRect.width -= revealSpeed
 
