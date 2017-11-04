@@ -1,25 +1,41 @@
 import pygame, sys, random, copy
 from pygame.locals import *
 
+
 # CONSTANTS, yo
 
 # Game window width and height
-WINDOWWIDTH = 400
-WINDOWHEIGHT = 500
+
+
+
+makeFullscreen = True
+#If fullscreen, use user's current resolution
+makeFullscreen = False
+# else use these window coordinates
+WINDOWWIDTH = 800
+WINDOWHEIGHT = 768
 
 # The infinite loops runs 30 times in one second
+# This much FPS is enough.
 FPS = 30
 
 # How big should be one small box
 # when you modify this, also modify the main font, as the X lives inside a box
-BOXSIZE = 100
+BOXSIZE = 43
+
+MARKSIZE = 41
+
+SMALLFONTSIZE= 30
 
 # Width of the line in pixels : This is the thing that actually separate the input small boxes
-GAPSIZE = 5
+GAPSIZE = 2
+
+# square board size
+BOARDSIZE= 9
 
 # Playing board width : How many small boxes needs to fit in the board
-BOARDWIDTH = 3
-BOARDHEIGHT = 3
+BOARDWIDTH = BOARDSIZE
+BOARDHEIGHT =  BOARDSIZE
 
 # TEXT Markers to be drawn
 XMARK = 'X'
@@ -39,8 +55,8 @@ Note that these margins are coordinates
 
 '''
 
-XMARGIN = int((WINDOWWIDTH -(BOARDWIDTH * (BOXSIZE + GAPSIZE)))/2)
-YMARGIN = int((WINDOWHEIGHT - (BOARDHEIGHT * (BOXSIZE + GAPSIZE)))/2)
+XMARGIN = (WINDOWWIDTH -  (BOARDWIDTH  * (BOXSIZE + GAPSIZE))) // 2
+YMARGIN = (WINDOWHEIGHT - (BOARDHEIGHT * (BOXSIZE + GAPSIZE))) // 2
 
 # RGB COLOUR MODEL
 #            R    G    B
@@ -64,7 +80,7 @@ COMBLUE  = (233, 232, 255)
 BGCOLOR = BLACK
 
 # BOX color - UNUSED AS OF NOW
-BOXCOLOR = BLUE
+#BOXCOLOR = BLUE
 
 # The line which joins 3 consecutive elements at the end
 LINECOLOR = YELLOW
@@ -72,26 +88,34 @@ LINECOLOR = YELLOW
 
 def main():
 
+    # Initialise pygame to access all video modules
+    pygame.init()
+
+
     global FPSCLOCK, DISPLAYSURFACE
 
-    # Initialise the library my friend
-    pygame.init()
 
     # Hold the clock as a variable - to tick later : controls the loop iterations per second.
     FPSCLOCK = pygame.time.Clock()
 
     # The Surface over which everything will be drawn - Window width and height
-    DISPLAYSURFACE = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
+
+    if (makeFullscreen):
+        # Get user's screen resolution
+        user_info = pygame.display.Info()
+        DISPLAYSURFACE = pygame.display.set_mode((user_info.current_w, user_info.current_h), pygame.FULLSCREEN)
+    else:
+        DISPLAYSURFACE = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
 
     # mainFont : Font for drawing X and O in the boxes
     # Modification required : Remove magic number & put something relative to box
-    mainFont = pygame.font.SysFont('Helvetica', 90)
+    mainFont = pygame.font.SysFont('Helvetica', MARKSIZE)
 
     # smallFont : draws the score box and the end game credits
-    smallFont = pygame.font.SysFont('Helvetica', 25)
+    smallFont = pygame.font.SysFont('Helvetica', SMALLFONTSIZE)
 
     # Caption of window
-    pygame.display.set_caption('Tic-Tac-Toe')
+    pygame.display.set_caption('Tic-Tac-Toe dev')
 
     # Mouse coordinates
     mousex = 0
@@ -281,57 +305,88 @@ def main():
 @usage     : This function will be used to draw 9 lines
 '''
 
-
+# old draw lines
+'''
 def drawLines():
-
-    #######VERTICAL LINES########
+    # works fine. But we need more sophisticated graphics.
+    #:return:
     
-    left = XMARGIN + BOXSIZE
+    left = XMARGIN
     top = YMARGIN
 
-    # How wide is the vertical line
-    width = GAPSIZE
-    # height : How thick is the vertical line
-    height = (BOXSIZE + GAPSIZE) * BOARDHEIGHT
-
-    #  vertical rectangle needs to be drawn from top
-    vertRect1 = pygame.Rect(left, top, width, height)
-    pygame.draw.rect(DISPLAYSURFACE, WHITE, vertRect1)
-
-    #  horizontal rectangle needs to be drawn from beside the first box
-    vertRect2 = pygame.Rect(left + BOXSIZE + GAPSIZE, top, width, height)
-    pygame.draw.rect(DISPLAYSURFACE, WHITE, vertRect2)
-
-    '''
-    The Thing i do not understand is why only one side of rectange is visible
-    '''
-    '''
-    vertRect3 = pygame.Rect(left + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE, top, width, height)
-    pygame.draw.rect(DISPLAYSURFACE, WHITE, vertRect3)
-    '''
-
     ########HORIZONTAL LINES ##########
-
-    # need to draw horizontal lines
-
-    # left side distance = XMARGIN
-    left = XMARGIN
-
-    # Top distance is = YMARGIN + (for skipping the first box) BOXSIZE
-    top = YMARGIN + BOXSIZE
-
-    # How wide is the vertical line
+    # Length of horizontal line
     width = (BOXSIZE + GAPSIZE) * BOARDWIDTH
-    # height : How thick is the horizontal line
+    # height of line
     height = GAPSIZE
 
-    #  horizontal rectangle needs to be drawn from top
-    horizRect1 = pygame.Rect(left, top, width, height)
-    pygame.draw.rect(DISPLAYSURFACE, WHITE, horizRect1)
+    # DRAW 8 lines
+    for line_no in range(1, BOARDSIZE):
+        #  horizontal rectangle needs to be drawn from top
+        horizRect1 = pygame.Rect(left, top + line_no*(BOXSIZE + GAPSIZE), width, height)
+        pygame.draw.rect(DISPLAYSURFACE, GREEN, horizRect1)
 
-    #  horizontal rectangle needs to be drawn from below the first box
-    horizRect2 = pygame.Rect(left, top + BOXSIZE + GAPSIZE, width, height)
-    pygame.draw.rect(DISPLAYSURFACE, WHITE, horizRect2)
+
+    #######VERTICAL LINES########
+
+    # swap because, they both are opposite for horizontal and vertical lines
+    width, height = height, width
+
+    # DRAW 8 lines
+    for line_no in range(1, BOARDSIZE):
+        #  horizontal rectangle needs to be drawn from top
+        horizRect1 = pygame.Rect(left + line_no*(BOXSIZE + GAPSIZE), top, width, height)
+        pygame.draw.rect(DISPLAYSURFACE, WHITE, horizRect1)
+'''
+
+
+# experimental
+def drawLines():
+    '''
+    Works fine. But we need more sophisticated graphics.
+    :return:
+    '''
+    BIGBOXSIZE= (BOXSIZE + GAPSIZE) * BOARDWIDTH
+    BIGBOARDSIZE= BOARDSIZE//3
+    left = XMARGIN
+    top = YMARGIN
+
+    ########HORIZONTAL LINES ##########
+    # Length of horizontal line
+    width = (BOXSIZE + GAPSIZE) * BOARDWIDTH
+    # height of line
+    height = GAPSIZE
+
+    # DRAW 3 lines of BIG BOARD
+    for line_no in range(3, BOARDSIZE, 3):
+        #  horizontal rectangle needs to be drawn from top
+        horizRect1 = pygame.Rect(left, top + line_no * (BOXSIZE + GAPSIZE), width, height)
+        pygame.draw.rect(DISPLAYSURFACE, GREEN, horizRect1, 5)
+
+    # DRAW 8 lines
+    # for boundaries - change to range(0, BOARDSIZE+1)
+    for line_no in range(1, BOARDSIZE):
+        #  horizontal rectangle needs to be drawn from top
+        horizRect1 = pygame.Rect(left, top + line_no*(BOXSIZE + GAPSIZE), width, height)
+        pygame.draw.rect(DISPLAYSURFACE, WHITE, horizRect1)
+
+
+    #######VERTICAL LINES########
+
+    # swap because, they both are opposite for horizontal and vertical lines
+    width, height = height, width
+
+    # DRAW 3 lines of BIG BOARD
+    for line_no in range(3, BOARDSIZE, 3):
+        #  horizontal rectangle needs to be drawn from top
+        horizRect1 = pygame.Rect(left + line_no * (BOXSIZE + GAPSIZE), top, width, height)
+        pygame.draw.rect(DISPLAYSURFACE, GREEN, horizRect1, 5)
+
+    # DRAW 8 lines
+    for line_no in range(1, BOARDSIZE):
+        #  horizontal rectangle needs to be drawn from top
+        horizRect1 = pygame.Rect(left + line_no*(BOXSIZE + GAPSIZE), top, width, height)
+        pygame.draw.rect(DISPLAYSURFACE, WHITE, horizRect1)
 
 
 '''
@@ -343,11 +398,105 @@ For each Row one sublist, one sublist represents columns
 
 
 def makeEachBoxFalse(val):
+    """
+    Time to modify you my friend
+
+    Initially it was this,
+    [
+        [False, False, False],
+        [False, False, False],
+        [False, False, False]
+    ]
+
+    Not wanna make this ->>>
+    [
+    [ False, False, False, False, False, False, False, False, False ],
+    [ False, False, False, False, False, False, False, False, False ],
+    [ False, False, False, False, False, False, False, False, False ],
+    [ False, False, False, False, False, False, False, False, False ],
+    [ False, False, False, False, False, False, False, False, False ],
+    [ False, False, False, False, False, False, False, False, False ],
+    [ False, False, False, False, False, False, False, False, False ],
+    [ False, False, False, False, False, False, False, False, False ],
+    [ False, False, False, False, False, False, False, False, False ]
+    ]
+
+    But this - data structure variable
+
+
+    :param val:
+    :return:
+    """
+
+    # convert it to looping structure
+    data_structure_required = [
+        [
+            [
+                [ False, False, False],      # small box row 0
+                [ False, False, False],      # small box row 1
+                [ False, False, False]       # small box row 2
+            ],     # small box 0
+
+            [
+                [ False, False, False],      # small box row 0
+                [ False, False, False],      # small box row 1
+                [ False, False, False]       # small box row 2
+            ],     # small box 1
+
+            [
+                [ False, False, False],      # small box row 0
+                [ False, False, False],      # small box row 1
+                [ False, False, False]       # small box row 2
+            ]      # small box 2
+        ],        # big row zero
+
+        [
+            [
+                [ False, False, False],      # small box row 0
+                [ False, False, False],      # small box row 1
+                [ False, False, False]       # small box row 2
+            ],     # small box 0
+
+            [
+                [ False, False, False],      # small box row 0
+                [ False, False, False],      # small box row 1
+                [ False, False, False]       # small box row 2
+            ],     # small box 1
+
+            [
+                [ False, False, False],      # small box row 0
+                [ False, False, False],      # small box row 1
+                [ False, False, False]       # small box row 2
+            ]      # small box 2
+        ],        # big row one
+
+        [
+            [
+                [ False, False, False],      # small box row 0
+                [ False, False, False],      # small box row 1
+                [ False, False, False]       # small box row 2
+            ],     # small box 0
+
+            [
+                [ False, False, False],      # small box row 0
+                [ False, False, False],      # small box row 1
+                [ False, False, False]       # small box row 2
+            ],     # small box 1
+
+            [
+                [ False, False, False],      # small box row 0
+                [ False, False, False],      # small box row 1
+                [ False, False, False]       # small box row 2
+            ]      # small box 2
+        ]  # big row two
+    ]
+
     usedBoxes = []
     for i in range(BOARDWIDTH):
         # append a list
         usedBoxes.append([val] * BOARDHEIGHT)
     # Return a list of lists
+
     return usedBoxes
 
 
