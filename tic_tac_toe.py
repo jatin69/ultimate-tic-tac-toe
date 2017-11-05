@@ -1,7 +1,6 @@
 import pygame, sys, random, copy
 from pygame.locals import *
 
-
 # CONSTANTS, yo
 
 # Game window width and height
@@ -9,7 +8,7 @@ from pygame.locals import *
 
 
 makeFullscreen = True
-#If fullscreen, use user's current resolution
+# If fullscreen, use user's current resolution
 makeFullscreen = False
 # else use these window coordinates
 WINDOWWIDTH = 800
@@ -25,17 +24,19 @@ BOXSIZE = 43
 
 MARKSIZE = 41
 
-SMALLFONTSIZE= 30
+SMALLFONTSIZE = 30
 
 # Width of the line in pixels : This is the thing that actually separate the input small boxes
 GAPSIZE = 2
 
+BIGBOXSIZE = 3
+
 # square board size
-BOARDSIZE= 9
+BOARDSIZE = 9
 
 # Playing board width : How many small boxes needs to fit in the board
 BOARDWIDTH = BOARDSIZE
-BOARDHEIGHT =  BOARDSIZE
+BOARDHEIGHT = BOARDSIZE
 
 # TEXT Markers to be drawn
 XMARK = 'X'
@@ -55,24 +56,23 @@ Note that these margins are coordinates
 
 '''
 
-XMARGIN = (WINDOWWIDTH -  (BOARDWIDTH  * (BOXSIZE + GAPSIZE))) // 2
+XMARGIN = (WINDOWWIDTH - (BOARDWIDTH * (BOXSIZE + GAPSIZE))) // 2
 YMARGIN = (WINDOWHEIGHT - (BOARDHEIGHT * (BOXSIZE + GAPSIZE))) // 2
 
 # RGB COLOUR MODEL
 #            R    G    B
-GRAY     = (100, 100, 100)
-NAVYBLUE = ( 60,  60, 100)
-WHITE    = (255, 255, 255)
-RED      = (255,   0,   0)
-GREEN    = (  0, 255,   0)
-BLUE     = (  0,   0, 255)
-YELLOW   = (255, 255,   0)
-ORANGE   = (255, 128,   0)
-PURPLE   = (255,   0, 255)
-CYAN     = (  0, 255, 255)
-BLACK    = (  0,   0,   0)
-COMBLUE  = (233, 232, 255)
-
+GRAY = (100, 100, 100)
+NAVYBLUE = (60, 60, 100)
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+YELLOW = (255, 255, 0)
+ORANGE = (255, 128, 0)
+PURPLE = (255, 0, 255)
+CYAN = (0, 255, 255)
+BLACK = (0, 0, 0)
+COMBLUE = (233, 232, 255)
 
 # GAME COLOURS
 
@@ -80,20 +80,17 @@ COMBLUE  = (233, 232, 255)
 BGCOLOR = BLACK
 
 # BOX color - UNUSED AS OF NOW
-#BOXCOLOR = BLUE
+# BOXCOLOR = BLUE
 
 # The line which joins 3 consecutive elements at the end
 LINECOLOR = YELLOW
 
 
 def main():
-
     # Initialise pygame to access all video modules
     pygame.init()
 
-
     global FPSCLOCK, DISPLAYSURFACE
-
 
     # Hold the clock as a variable - to tick later : controls the loop iterations per second.
     FPSCLOCK = pygame.time.Clock()
@@ -146,12 +143,13 @@ def main():
     The function makeEachBoxFalse() returns a list of all false boxes
     '''
     # Main board variable
+    # change its name to initialise....
     mainBoard = makeEachBoxFalse(False)
     # Initially used boxes
-    usedBoxes = makeEachBoxFalse(False)
+    # usedBoxes = makeEachBoxFalse(False)
 
     # Player turn : bool variable
-    playerTurnDone = False
+    game_turn = 'player'
 
     # Paint the surface black
     DISPLAYSURFACE.fill(BGCOLOR)
@@ -161,7 +159,13 @@ def main():
     '''
     drawLines()
 
+    # highlight(mainBoard, 0)
+
     # The GRAND game loop
+
+    expected_row = None
+    expected_column = None
+
     while True:
 
         # set mouseClick as False
@@ -189,113 +193,173 @@ def main():
         So to obtain the exact box where the mouse is clicked, this function is used.
         @:returns: The box coordinates, where mouse is clicked
         '''
-        boxx, boxy = getBoxAtPixel(mousex, mousey)
+        row, column, box_row, box_column = getBoxAtPixel(mousex, mousey)
+        # correct here, perfect
+        # print(row, column, box_row, box_column)
 
+        # Firstmost turn
+
+        if mouseClicked and expected_column is not None and expected_row is not None and \
+                (row != expected_row or column != expected_column):
+            row = None
+            column = None
+            pygame.display.update()
+            highlight(mainBoard, expected_row, expected_column)
+
+            # print(row, column)
 
         # If Inside the board, move forward, else ignore
-        if boxx != None and boxy != None:
+        if row is not None and column is not None and box_row is not None and box_column is not None:
 
-            # If box is not already used, & mouse if clicked just now, move forward
-            if not usedBoxes[boxx][boxy] and mouseClicked and playerTurnDone is False:
-                # DRAW X
-                markBoxX(boxx, boxy, mainFont)
-                # Play sound
+            if game_turn == 'player' and mainBoard[row][column][box_row][box_column] is False and mouseClicked:
+                markBox(row, column, box_row, box_column, mainFont, XMARK)
                 BEEP1.play()
-
-                # set true to used Boxes
-                usedBoxes[boxx][boxy] = True
-                # Mark mainboard
-                mainBoard[boxx][boxy] = XMARK
+                mainBoard[row][column][box_row][box_column] = XMARK
                 # Player turn done
-                playerTurnDone = True
-
-                # Update display - early update
-                # Needs update, or the last iteration isn't displayed.
-                # Further, to solve this issue, we could extend one iteration,
-                # But this approach is also cool, so good
+                game_turn = 'computer'
+                dehighlight(mainBoard, row, column)
                 pygame.display.update()
-
-            # If computer turn, play the move
-            elif playerTurnDone == True:
-                # a little delay - time pause for 500 ms
+                expected_row = box_row
+                expected_column = box_column
+                highlight(mainBoard, expected_row, expected_column)
                 pygame.time.wait(500)
-
-
-                # derive the boxes to be marked with AI
-                boxx, boxy = computerTurnWithAI(usedBoxes, mainBoard)
-                # AI processed.
-
-                # mark box, play sound
-                markBoxO(boxx, boxy, mainFont)
-                BEEP2.play()
-                # update tables
-                usedBoxes[boxx][boxy] = True
-                mainBoard[boxx][boxy] = OMARK
-                # next is player turn
-                playerTurnDone = False
                 pygame.display.update()
+
+            # make it mouse clickable for now, add AI Later
+            elif game_turn == 'computer' and mainBoard[row][column][box_row][box_column] is False and mouseClicked:
+                # derive move from AI later
+                markBox(row, column, box_row, box_column, mainFont, OMARK)
+                BEEP2.play()
+                mainBoard[row][column][box_row][box_column] = OMARK
+                # Player turn done
+                game_turn = 'player'
+                dehighlight(mainBoard, row, column)
+                pygame.display.update()
+                expected_row = box_row
+                expected_column = box_column
+                highlight(mainBoard, expected_row, expected_column)
+                pygame.time.wait(500)
+                pygame.display.update()
+
+        # If box is not already used, & mouse if clicked just now, move forward
+        # WORK REQUIRED here
+        # If Inside the board, move forward, else ignore
+        # if boxx != None and boxy != None:
+        #
+        #     # If box is not already used, & mouse if clicked just now, move forward
+        #     if not usedBoxes[boxx][boxy] and mouseClicked and playerTurnDone is False:
+        #         # DRAW X
+        #         markBoxX(boxx, boxy, mainFont)
+        #         # Play sound
+        #         BEEP1.play()
+        #
+        #         # set true to used Boxes
+        #         usedBoxes[boxx][boxy] = True
+        #         # Mark mainboard
+        #         mainBoard[boxx][boxy] = XMARK
+        #         # Player turn done
+        #         playerTurnDone = True
+        #
+        #         # Update display - early update
+        #         # Needs update, or the last iteration isn't displayed.
+        #         # Further, to solve this issue, we could extend one iteration,
+        #         # But this approach is also cool, so good
+        #         pygame.display.update()
+        #
+        #     # If computer turn, play the move
+        #     elif playerTurnDone == True:
+        #         # a little delay - time pause for 500 ms
+        #         pygame.time.wait(500)
+        #
+        #
+        #         # derive the boxes to be marked with AI
+        #         boxx, boxy = computerTurnWithAI(usedBoxes, mainBoard)
+        #         # AI processed.
+        #
+        #         # mark box, play sound
+        #         markBoxO(boxx, boxy, mainFont)
+        #         BEEP2.play()
+        #         # update tables
+        #         usedBoxes[boxx][boxy] = True
+        #         mainBoard[boxx][boxy] = OMARK
+        #         # next is player turn
+        #         playerTurnDone = False
+        #         pygame.display.update()
 
         # Check if anyone won the game, after the previous move
-        playerWins, computerWins = gameWon(mainBoard)
 
+        # return a, b, c as three consecutive boxes which helped won
+        # a= (box_row1, box_column1) , similarly all 3
+        # a, b, c are tuples
+
+        winner, b1, b2, b3 = smallGameWon(mainBoard, row, column, box_row, box_column)
         # If player won, highlight the boxes, play sound, reset board for next turn
-        if playerWins:
-            pygame.time.wait(500)
-            highlightWin(mainBoard)
-            BEEP3.play()
-            pygame.display.update()
-            playerScore += 1
-            usedBoxes, mainBoard, playerTurnDone, playerWins, computerWins = boardReset(usedBoxes, mainBoard, playerTurnDone, playerWins, computerWins)
-            DISPLAYSURFACE.fill(BGCOLOR)
-            drawLines()
-            
-        elif computerWins:
-            pygame.time.wait(500)
-            highlightWin(mainBoard)
-            BEEP3.play()
-            pygame.display.update()
-            computerScore += 1
-            usedBoxes, mainBoard, playerTurnDone, playerWins, computerWins = boardReset(usedBoxes, mainBoard, playerTurnDone, playerWins, computerWins)
-            # IMPORTANT
-            DISPLAYSURFACE.fill(BGCOLOR)
-            drawLines()
 
-        else:
-            if gameOver(usedBoxes, mainBoard):
-                tieScore += 1
-                usedBoxes, mainBoard, playerTurnDone, playerWins, computerWins = boardReset(usedBoxes, mainBoard, playerTurnDone, playerWins, computerWins)
-                DISPLAYSURFACE.fill(BGCOLOR)
-                drawLines()
+        # Returned when no more space left
+        if winner is 'tie':
+            tieScore += 1
+
+        elif winner is 'player':
+            playerScore += 1
+
+        elif winner is 'computer':
+            computerScore += 1
+
+        emptytuple = ()
+        # returned when no winner
+
+        if b1 is not emptytuple and b2 is not emptytuple and b3 is not emptytuple:
+            pygame.time.wait(500)
+            highlightWin(mainBoard, row, column, b1, b2, b3)
+            BEEP3.play()
+            pygame.display.update()
+
+        # No reset required in our case.
+        # mainBoard, playerTurnDone, playerWins, computerWins = boardReset(mainBoard, playerTurnDone, playerWins, computerWins)
+        # DISPLAYSURFACE.fill(BGCOLOR)
+        # drawLines()
+
+
+        # will add this
+        # maintain a WINNERMATRIX for big board
+        # winner = gameWon(mainBoard)
+
+
+        # else:
+        #     if gameOver(mainBoard):
+        #         tieScore += 1
+        #         mainBoard, playerTurnDone, playerWins, computerWins = boardReset(mainBoard,
+        #                                                                          playerTurnDone, playerWins,
+        #                                                                          computerWins)
+        #         DISPLAYSURFACE.fill(BGCOLOR)
+        #         drawLines()
 
         # Time to END THE GAME
-        if tieScore >= 1:
-            DISPLAYSURFACE.fill(BGCOLOR)
-            pygame.display.update()
-            pygame.time.wait(1000)
-            # end game credits
-            warGameEnding(smallFont, COMPUTERVOICE)
-            pygame.display.update()
-
-            # RESET BOARD
-            usedBoxes, mainBoard, playerTurnDone, playerWins, computerWins = boardReset(usedBoxes, mainBoard, playerTurnDone, playerWins, computerWins)
-            tieScore = 0
-            playerScore = 0
-            computerScore = 0
-            DISPLAYSURFACE.fill(BGCOLOR)
-            drawLines()
-
-        
+        # if tieScore >= 1:
+        #     DISPLAYSURFACE.fill(BGCOLOR)
+        #     pygame.display.update()
+        #     pygame.time.wait(1000)
+        #     # end game credits
+        #     warGameEnding(smallFont, COMPUTERVOICE)
+        #     pygame.display.update()
+        #
+        #     # RESET BOARD
+        #     mainBoard, playerTurnDone, playerWins, computerWins = boardReset(mainBoard,
+        #                                                                      playerTurnDone, playerWins,
+        #                                                                      computerWins)
+        #     tieScore = 0
+        #     playerScore = 0
+        #     computerScore = 0
+        #     DISPLAYSURFACE.fill(BGCOLOR)
+        #     drawLines()
 
         drawScoreBoard(smallFont, playerScore, computerScore, tieScore)
-        
-                
 
         # Render the updated graphics on screen
         pygame.display.update()
 
         # Tick the CLOCK
         FPSCLOCK.tick(FPS)
-
 
 
 ###### Functions to set up the board  #########
@@ -341,13 +405,14 @@ def drawLines():
 
 
 # experimental
+# Does not interfere with new data structure
 def drawLines():
     '''
     Works fine. But we need more sophisticated graphics.
     :return:
     '''
-    BIGBOXSIZE= (BOXSIZE + GAPSIZE) * BOARDWIDTH
-    BIGBOARDSIZE= BOARDSIZE//3
+    BIGBOXSIZE = (BOXSIZE + GAPSIZE) * BOARDWIDTH
+    BIGBOARDSIZE = BOARDSIZE // 3
     left = XMARGIN
     top = YMARGIN
 
@@ -365,11 +430,10 @@ def drawLines():
 
     # DRAW 8 lines
     # for boundaries - change to range(0, BOARDSIZE+1)
-    for line_no in range(1, BOARDSIZE):
+    for line_no in range(0, BOARDSIZE + 1):
         #  horizontal rectangle needs to be drawn from top
-        horizRect1 = pygame.Rect(left, top + line_no*(BOXSIZE + GAPSIZE), width, height)
+        horizRect1 = pygame.Rect(left, top + line_no * (BOXSIZE + GAPSIZE), width, height)
         pygame.draw.rect(DISPLAYSURFACE, WHITE, horizRect1)
-
 
     #######VERTICAL LINES########
 
@@ -383,9 +447,9 @@ def drawLines():
         pygame.draw.rect(DISPLAYSURFACE, GREEN, horizRect1, 5)
 
     # DRAW 8 lines
-    for line_no in range(1, BOARDSIZE):
+    for line_no in range(0, BOARDSIZE + 1):
         #  horizontal rectangle needs to be drawn from top
-        horizRect1 = pygame.Rect(left + line_no*(BOXSIZE + GAPSIZE), top, width, height)
+        horizRect1 = pygame.Rect(left + line_no * (BOXSIZE + GAPSIZE), top, width, height)
         pygame.draw.rect(DISPLAYSURFACE, WHITE, horizRect1)
 
 
@@ -432,85 +496,181 @@ def makeEachBoxFalse(val):
     data_structure_required = [
         [
             [
-                [ False, False, False],      # small box row 0
-                [ False, False, False],      # small box row 1
-                [ False, False, False]       # small box row 2
-            ],     # small box 0
+                [False, False, False],  # small box row 0
+                [False, False, False],  # small box row 1
+                [False, False, False]  # small box row 2
+            ],  # small box 0
 
             [
-                [ False, False, False],      # small box row 0
-                [ False, False, False],      # small box row 1
-                [ False, False, False]       # small box row 2
-            ],     # small box 1
+                [False, False, False],  # small box row 0
+                [False, False, False],  # small box row 1
+                [False, False, False]  # small box row 2
+            ],  # small box 1
 
             [
-                [ False, False, False],      # small box row 0
-                [ False, False, False],      # small box row 1
-                [ False, False, False]       # small box row 2
-            ]      # small box 2
-        ],        # big row zero
-
-        [
-            [
-                [ False, False, False],      # small box row 0
-                [ False, False, False],      # small box row 1
-                [ False, False, False]       # small box row 2
-            ],     # small box 0
-
-            [
-                [ False, False, False],      # small box row 0
-                [ False, False, False],      # small box row 1
-                [ False, False, False]       # small box row 2
-            ],     # small box 1
-
-            [
-                [ False, False, False],      # small box row 0
-                [ False, False, False],      # small box row 1
-                [ False, False, False]       # small box row 2
-            ]      # small box 2
-        ],        # big row one
+                [False, False, False],  # small box row 0
+                [False, False, False],  # small box row 1
+                [False, False, False]  # small box row 2
+            ]  # small box 2
+        ],  # big row zero
 
         [
             [
-                [ False, False, False],      # small box row 0
-                [ False, False, False],      # small box row 1
-                [ False, False, False]       # small box row 2
-            ],     # small box 0
+                [False, False, False],  # small box row 0
+                [False, False, False],  # small box row 1
+                [False, False, False]  # small box row 2
+            ],  # small box 0
 
             [
-                [ False, False, False],      # small box row 0
-                [ False, False, False],      # small box row 1
-                [ False, False, False]       # small box row 2
-            ],     # small box 1
+                [False, False, False],  # small box row 0
+                [False, False, False],  # small box row 1
+                [False, False, False]  # small box row 2
+            ],  # small box 1
 
             [
-                [ False, False, False],      # small box row 0
-                [ False, False, False],      # small box row 1
-                [ False, False, False]       # small box row 2
-            ]      # small box 2
+                [False, False, False],  # small box row 0
+                [False, False, False],  # small box row 1
+                [False, False, False]  # small box row 2
+            ]  # small box 2
+        ],  # big row one
+
+        [
+            [
+                [False, False, False],  # small box row 0
+                [False, False, False],  # small box row 1
+                [False, False, False]  # small box row 2
+            ],  # small box 0
+
+            [
+                [False, False, False],  # small box row 0
+                [False, False, False],  # small box row 1
+                [False, False, False]  # small box row 2
+            ],  # small box 1
+
+            [
+                [False, False, False],  # small box row 0
+                [False, False, False],  # small box row 1
+                [False, False, False]  # small box row 2
+            ]  # small box 2
         ]  # big row two
     ]
 
     usedBoxes = []
-    for i in range(BOARDWIDTH):
+    usedBoxes = copy.deepcopy(data_structure_required)
+    '''for i in range(BOARDWIDTH):
         # append a list
         usedBoxes.append([val] * BOARDHEIGHT)
     # Return a list of lists
-
+    '''
     return usedBoxes
 
 
+def smallGameWon(mainBoard, row, column, box_row, box_column):
+    '''
+
+    :param mainBoard:
+    :param row:
+    :param column:
+    :param box_row:
+    :param box_column:
+    :return:
+    '''
+    winner = None  # can be tie, player, computer
+    # winning tiny boxes coordinates
+    b1 = ()
+    b2 = ()
+    b3 = ()
+    return winner, b1, b2, b3
+
+
+def dehighlight(mainBoard, row, column):
+    '''
+    De highlight stuff
+    :param mainBoard:
+    :param row:
+    :param column:
+    :return:
+    '''
+    # BOX decides top and left  and width and height
+    top = YMARGIN + (3 * row) * (BOXSIZE + GAPSIZE)
+    left = XMARGIN + (3 * column) * (BOXSIZE + GAPSIZE)
+
+    width = 3 * (BOXSIZE + GAPSIZE)
+    height = 3 * (BOXSIZE + GAPSIZE)
+
+    highlight_box_color = (140, 255, 26)
+    horizRect1 = pygame.Rect(left, top, width, height)
+
+    # highlight
+    pygame.draw.rect(DISPLAYSURFACE, BLACK, horizRect1)
+    # redraw lines
+    drawLines()
+    # redraw symbols
+    redraw(mainBoard, row, column)
+    # for now, come back after its safe
+
+
+'''
+Re draw symbols in that box after high lighting
+'''
+
+
+def highlight(mainBoard, row, column):
+    '''
+
+    :param mainBoard: the entire board, updates will happen here
+    :param box_no: which box to highlight
+    :return:
+    '''
+    # row = box_no // 3
+    # column = box_no % 3
+
+    # highlight_small_box = board[row][column]
+
+    # BOX decides top and left  and width and height
+    top = YMARGIN + (3 * row) * (BOXSIZE + GAPSIZE)
+    left = XMARGIN + (3 * column) * (BOXSIZE + GAPSIZE)
+
+    width = 3 * (BOXSIZE + GAPSIZE)
+    height = 3 * (BOXSIZE + GAPSIZE)
+
+    highlight_box_color = (140, 255, 26)
+    horizRect1 = pygame.Rect(left, top, width, height)
+
+    # highlight
+    pygame.draw.rect(DISPLAYSURFACE, highlight_box_color, horizRect1, 0)
+    # redraw lines
+    drawLines()
+    # redraw symbols
+    redraw(mainBoard, row, column)
+    # for now, come back after its safe
+
+
+def redraw(board, row, column):
+    '''
+    AIM: To redraw lost symbols
+    :param board:
+    :param row:
+    :param column:
+    :return:
+    '''
+    mainFont = pygame.font.SysFont('Helvetica', MARKSIZE)
+    for boxx in range(3):
+        for boxy in range(3):
+            mark = board[row][column][boxx][boxy]
+            if mark is not False:
+                markBox(row, column, boxx, boxy, mainFont, mark)
+                # done
+
+
 def drawScoreBoard(smallFont, playerScore, computerScore, tieScore):
-    scoreBoard = smallFont.render('Player: ' + str(playerScore) + '     ' + 'Computer: ' + str(computerScore) + '      ' + 'Tie: ' + str(tieScore), True, COMBLUE, BGCOLOR)
+    scoreBoard = smallFont.render(
+        'Player: ' + str(playerScore) + '     ' + 'Computer: ' + str(computerScore) + '      ' + 'Tie: ' + str(
+            tieScore), True, COMBLUE, BGCOLOR)
     scoreBoardRect = scoreBoard.get_rect()
     scoreBoardRect.x = 0
     scoreBoardRect.y = 0
     DISPLAYSURFACE.blit(scoreBoard, scoreBoardRect)
-
-
-
-
-
 
 
 ##### Coordinate Functions #####
@@ -525,16 +685,35 @@ Iterate over each possible SMALL BOX, derive its top left coordinates
 '''
 
 
+# Needs to be modified with respect to new data structure
+# But does not interfere
 def getBoxAtPixel(x, y):
-    for boxx in range(BOARDWIDTH):
-        for boxy in range(BOARDHEIGHT):
-            left, top = leftTopCoordsOfBox(boxx, boxy)
-            # Draw a rectangle from top left coordinate of the box
-            # If made box and mouse pixel intersect, we found it right
-            boxRect = pygame.Rect(left, top, BOXSIZE, BOXSIZE)
-            if boxRect.collidepoint(x, y):
-                return (boxx, boxy)
-    return (None, None)
+    for row in range(BIGBOXSIZE):
+        for column in range(BIGBOXSIZE):
+            for box_row in range(BIGBOXSIZE):
+                for box_column in range(BIGBOXSIZE):
+
+                    # left, top = leftTopCoordsOfBox(row, column, box_row, box_column)
+
+                    # Reach BIG BOX + reach specific box inside it
+                    top = (YMARGIN + (3 * row) * (BOXSIZE + GAPSIZE)) + (box_row * (BOXSIZE + GAPSIZE))
+                    left = (XMARGIN + (3 * column) * (BOXSIZE + GAPSIZE)) + (box_column * (BOXSIZE + GAPSIZE))
+
+                    boxRect = pygame.Rect(left, top, BOXSIZE, BOXSIZE)
+                    if boxRect.collidepoint(x, y):
+                        return (row, column, box_row, box_column)
+
+    return (None, None, None, None)
+    #
+    # for boxx in range(BOARDWIDTH):
+    #     for boxy in range(BOARDHEIGHT):
+    #         left, top = leftTopCoordsOfBox(boxx, boxy)
+    #         # Draw a rectangle from top left coordinate of the box
+    #         # If made box and mouse pixel intersect, we found it right
+    #         boxRect = pygame.Rect(left, top, BOXSIZE, BOXSIZE)
+    #         if boxRect.collidepoint(x, y):
+    #             return (boxx, boxy)
+    # return (None, None)
 
 
 '''
@@ -544,12 +723,13 @@ def getBoxAtPixel(x, y):
 
 '''
 
-
+'''
 def leftTopCoordsOfBox(boxx, boxy):
+
     left = boxx * (BOXSIZE + GAPSIZE) + XMARGIN
     top = boxy * (BOXSIZE + GAPSIZE) + YMARGIN
     return left, top
-
+'''
 
 '''
 @:function : centerxAndCenteryOfBox
@@ -559,18 +739,10 @@ Minor note : a little extra on y side, because i want the X/O a lil down
 '''
 
 
-
 def centerxAndCenteryOfBox(boxx, boxy):
     centerx = boxx * (BOXSIZE + GAPSIZE) + XMARGIN + (BOXSIZE / 2)
     centery = boxy * (BOXSIZE + GAPSIZE) + YMARGIN + (BOXSIZE / 2) + 5
     return centerx, centery
-
-
-
-
-
-
-
 
 
 ##### Functions dealing with computer and player moves ######
@@ -585,7 +757,7 @@ approach :
 '''
 
 
-def markBoxX(boxx, boxy, mainFont):
+def markBox(row, column, box_row, box_column, mainFont, MARK):
     '''
     This creates a new Surface with the specified text rendered on it. 
     pygame provides no way to directly draw text on an existing Surface:
@@ -593,7 +765,7 @@ def markBoxX(boxx, boxy, mainFont):
     then blit this image onto another Surface.
     '''
     # Use Main Font to - render Xmark on a new surface
-    mark = mainFont.render(XMARK, True, WHITE)
+    mark = mainFont.render(MARK, True, WHITE)
     '''
     Surfaces don't have a position, so you have to store the blit position in the rect. 
     When you call the get_rect method of a pygame.Surface, Pygame creates a new rect
@@ -603,7 +775,15 @@ def markBoxX(boxx, boxy, mainFont):
     markRect = mark.get_rect()
 
     # find center of small box
-    centerx, centery = centerxAndCenteryOfBox(boxx, boxy)
+    # Reach BIG BOX + reach specific box inside it
+    top = (YMARGIN + (3 * row) * (BOXSIZE + GAPSIZE)) + (box_row * (BOXSIZE + GAPSIZE))
+    left = (XMARGIN + (3 * column) * (BOXSIZE + GAPSIZE)) + (box_column * (BOXSIZE + GAPSIZE))
+
+    # then go to center of box
+    centerx = left + (BOXSIZE + GAPSIZE) // 2
+    centery = top + (BOXSIZE + GAPSIZE) // 2
+
+    # centerx, centery = centerxAndCenteryOfBox(boxx, boxy)
 
     # update the center = to center of the current box, so that TEXT appears inside box
     # Interesting Note : pygame re calculates the top and left automatically, when i change the center
@@ -619,7 +799,7 @@ Function : markBoxO
 Approach : Exactly same as markBoxX
 '''
 
-
+'''
 def markBoxO(boxx, boxy, mainFont):
     centerx, centery = centerxAndCenteryOfBox(boxx, boxy)
     mark = mainFont.render(OMARK, True, WHITE)
@@ -627,7 +807,7 @@ def markBoxO(boxx, boxy, mainFont):
     markRect.centerx = centerx
     markRect.centery = centery
     DISPLAYSURFACE.blit(mark, markRect)
-
+'''
 
 '''
 @:Function : computerTurnWithAI
@@ -645,7 +825,6 @@ def markBoxO(boxx, boxy, mainFont):
 
 
 def computerTurnWithAI(usedBoxes, mainBoard):
-
     ## Step 1: Check to see if there is a winning move ##
     '''
 
@@ -654,149 +833,147 @@ def computerTurnWithAI(usedBoxes, mainBoard):
     :return: the AI move
     :approach: For each un-used box, play the AI move(O), and see if we can win
     '''
+    pass
 
-    for boxx in range(BOARDWIDTH):
-        for boxy in range(BOARDHEIGHT):
-            mainBoardCopy = copy.deepcopy(mainBoard)
-            if usedBoxes[boxx][boxy] == False:
-                mainBoardCopy[boxx][boxy] = OMARK
-                playerWins, computerWins = gameWon(mainBoardCopy)
-
-                if computerWins == True:
-                    return boxx, boxy
-
-
-
-
-    ## Step 2: Check to see if there is a potential win that needs to be blocked ##
-    '''
-    :approach: For each un-used box, play the player move (X), and see if we can win
-    '''
-    
-    for boxx in range(BOARDWIDTH):
-        for boxy in range(BOARDWIDTH):
-            mainBoardCopy = copy.deepcopy(mainBoard)
-            if usedBoxes[boxx][boxy] == False:
-                mainBoardCopy[boxx][boxy] = XMARK
-                playerWins, computerWins = gameWon(mainBoardCopy)
-
-                if playerWins == True:
-                    return boxx, boxy
-
-
-    ## Step 3: Check if the center is empty ##
-    # center is located at 1,1
-    mainBoardCopy = copy.deepcopy(mainBoard)
-
-    if mainBoardCopy[1][1] == False:
-        return 1, 1
-
-
-    ## Step 4: Prevent a potential fork ##
-    '''
-    A fork is a potential move  resulting in two winning situations
-    2 distance fork
-    1 distance fork
-    '''
-
-    if ((mainBoardCopy[0][0] == mainBoardCopy[2][2] == XMARK) or
-        (mainBoardCopy[0][2] == mainBoardCopy[2][0] == XMARK)):
-        if mainBoardCopy[1][2] == False:
-            return 1, 2
-
-
-    if mainBoard[1][0] == XMARK:
-        if mainBoard[0][1] == XMARK:
-            if mainBoard[0][0] == False:
-                return 0, 0
-
-    if mainBoard[1][0] == XMARK:
-        if mainBoard[2][1] == XMARK:
-            if mainBoard[2][0] == False:
-                return 2, 0
-
-    if mainBoard[0][1] == XMARK:
-        if mainBoard[1][2] == XMARK:
-            if mainBoard[0][2] == False:
-                return 0, 2
-
-    if mainBoard[2][1] == XMARK:
-        if mainBoard[1][2] == XMARK:
-            if mainBoard[2][2] == False:
-                return 2, 2
-        
-
-    if (mainBoard[0][2] == XMARK):
-        if (mainBoard[2][1] == XMARK):
-            if mainBoard[1][2] == False:
-                return 1, 2
-        elif (mainBoard[1][0]):
-            if mainBoard[0][1] == False:
-                return 0, 1
-
-    if mainBoard[2][2] == XMARK:
-        if mainBoard[0][1] == XMARK:
-            if mainBoard[1][2] == False:
-                return 1, 2
-        elif mainBoard[1][0] == XMARK:
-            if mainBoard[2][1] == False:
-                return 2, 1
-
-    if mainBoard[0][0] == XMARK:
-        if mainBoard[2][1] == XMARK:
-            if mainBoard[1][0] == False:
-                return 1, 0
-        elif mainBoard[1][2] == XMARK:
-            if mainBoard[0][1] == False:
-                return 0, 1
-
-    if mainBoard[2][0] == XMARK:
-        if mainBoard[1][2] == XMARK:
-            if mainBoard[2][1] == False:
-                return 2, 1
-        elif mainBoard[0][1] == XMARK:
-            if mainBoard[1][0] == False:
-                return 1, 0
-
-    
-
-    
-
-    
-                            
-
-    # if any corener is empty , grab it
-
-    ## Step 5: Check if a corner is open ##
-    
-    xlist = [0, 2, 0, 2]
-    ylist = [0, 2, 0, 2]
-
-    random.shuffle(xlist)
-    random.shuffle(ylist)
-
-    for x in xlist:
-        for y in ylist:
-            if mainBoardCopy[x][y] == False:
-                return x, y
-    
-    
-
-
-    # any side which is empty
-
-    ## Step 6: Check if a side is open ##
-
-    for boxx in range(BOARDWIDTH):
-        for boxy in range(BOARDHEIGHT):
-            if mainBoardCopy[boxx][boxy] == False:
-                return boxx, boxy
-
-
-
-
-
-
+    # for boxx in range(BOARDWIDTH):
+    #     for boxy in range(BOARDHEIGHT):
+    #         mainBoardCopy = copy.deepcopy(mainBoard)
+    #         if usedBoxes[boxx][boxy] == False:
+    #             mainBoardCopy[boxx][boxy] = OMARK
+    #             playerWins, computerWins = gameWon(mainBoardCopy)
+    #
+    #             if computerWins == True:
+    #                 return boxx, boxy
+    #
+    #
+    #
+    #
+    # ## Step 2: Check to see if there is a potential win that needs to be blocked ##
+    # '''
+    # :approach: For each un-used box, play the player move (X), and see if we can win
+    # '''
+    #
+    # for boxx in range(BOARDWIDTH):
+    #     for boxy in range(BOARDWIDTH):
+    #         mainBoardCopy = copy.deepcopy(mainBoard)
+    #         if usedBoxes[boxx][boxy] == False:
+    #             mainBoardCopy[boxx][boxy] = XMARK
+    #             playerWins, computerWins = gameWon(mainBoardCopy)
+    #
+    #             if playerWins == True:
+    #                 return boxx, boxy
+    #
+    #
+    # ## Step 3: Check if the center is empty ##
+    # # center is located at 1,1
+    # mainBoardCopy = copy.deepcopy(mainBoard)
+    #
+    # if mainBoardCopy[1][1] == False:
+    #     return 1, 1
+    #
+    #
+    # ## Step 4: Prevent a potential fork ##
+    # '''
+    # A fork is a potential move  resulting in two winning situations
+    # 2 distance fork
+    # 1 distance fork
+    # '''
+    #
+    # if ((mainBoardCopy[0][0] == mainBoardCopy[2][2] == XMARK) or
+    #     (mainBoardCopy[0][2] == mainBoardCopy[2][0] == XMARK)):
+    #     if mainBoardCopy[1][2] == False:
+    #         return 1, 2
+    #
+    #
+    # if mainBoard[1][0] == XMARK:
+    #     if mainBoard[0][1] == XMARK:
+    #         if mainBoard[0][0] == False:
+    #             return 0, 0
+    #
+    # if mainBoard[1][0] == XMARK:
+    #     if mainBoard[2][1] == XMARK:
+    #         if mainBoard[2][0] == False:
+    #             return 2, 0
+    #
+    # if mainBoard[0][1] == XMARK:
+    #     if mainBoard[1][2] == XMARK:
+    #         if mainBoard[0][2] == False:
+    #             return 0, 2
+    #
+    # if mainBoard[2][1] == XMARK:
+    #     if mainBoard[1][2] == XMARK:
+    #         if mainBoard[2][2] == False:
+    #             return 2, 2
+    #
+    #
+    # if (mainBoard[0][2] == XMARK):
+    #     if (mainBoard[2][1] == XMARK):
+    #         if mainBoard[1][2] == False:
+    #             return 1, 2
+    #     elif (mainBoard[1][0]):
+    #         if mainBoard[0][1] == False:
+    #             return 0, 1
+    #
+    # if mainBoard[2][2] == XMARK:
+    #     if mainBoard[0][1] == XMARK:
+    #         if mainBoard[1][2] == False:
+    #             return 1, 2
+    #     elif mainBoard[1][0] == XMARK:
+    #         if mainBoard[2][1] == False:
+    #             return 2, 1
+    #
+    # if mainBoard[0][0] == XMARK:
+    #     if mainBoard[2][1] == XMARK:
+    #         if mainBoard[1][0] == False:
+    #             return 1, 0
+    #     elif mainBoard[1][2] == XMARK:
+    #         if mainBoard[0][1] == False:
+    #             return 0, 1
+    #
+    # if mainBoard[2][0] == XMARK:
+    #     if mainBoard[1][2] == XMARK:
+    #         if mainBoard[2][1] == False:
+    #             return 2, 1
+    #     elif mainBoard[0][1] == XMARK:
+    #         if mainBoard[1][0] == False:
+    #             return 1, 0
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    # # if any corener is empty , grab it
+    #
+    # ## Step 5: Check if a corner is open ##
+    #
+    # xlist = [0, 2, 0, 2]
+    # ylist = [0, 2, 0, 2]
+    #
+    # random.shuffle(xlist)
+    # random.shuffle(ylist)
+    #
+    # for x in xlist:
+    #     for y in ylist:
+    #         if mainBoardCopy[x][y] == False:
+    #             return x, y
+    #
+    #
+    #
+    #
+    # # any side which is empty
+    #
+    # ## Step 6: Check if a side is open ##
+    #
+    # for boxx in range(BOARDWIDTH):
+    #     for boxy in range(BOARDHEIGHT):
+    #         if mainBoardCopy[boxx][boxy] == False:
+    #             return boxx, boxy
+    #
+    #
+    #
 
 
 ##### Functions dealing with an end of game ########
@@ -806,41 +983,45 @@ Function : gameWon()
 Purpose: Checks all the 8 scenarios of game winning and return the winner, if any
 '''
 
+
 def gameWon(mainBoard):
-
     # Player win by consecutive X mark
-    if ((mainBoard[0][0] == mainBoard[1][0] == mainBoard[2][0] == XMARK) or
-        (mainBoard[0][1] == mainBoard[1][1] == mainBoard[2][1] == XMARK) or
-        (mainBoard[0][2] == mainBoard[1][2] == mainBoard[2][2] == XMARK) or
-        (mainBoard[0][0] == mainBoard[0][1] == mainBoard[0][2] == XMARK) or
-        (mainBoard[1][0] == mainBoard[1][1] == mainBoard[1][2] == XMARK) or
-        (mainBoard[2][0] == mainBoard[2][1] == mainBoard[2][2] == XMARK) or
-        (mainBoard[0][0] == mainBoard[1][1] == mainBoard[2][2] == XMARK) or
-        (mainBoard[0][2] == mainBoard[1][1] == mainBoard[2][0] == XMARK)):
+    # if ((mainBoard[0][0] == mainBoard[1][0] == mainBoard[2][0] == XMARK) or
+    #     (mainBoard[0][1] == mainBoard[1][1] == mainBoard[2][1] == XMARK) or
+    #     (mainBoard[0][2] == mainBoard[1][2] == mainBoard[2][2] == XMARK) or
+    #     (mainBoard[0][0] == mainBoard[0][1] == mainBoard[0][2] == XMARK) or
+    #     (mainBoard[1][0] == mainBoard[1][1] == mainBoard[1][2] == XMARK) or
+    #     (mainBoard[2][0] == mainBoard[2][1] == mainBoard[2][2] == XMARK) or
+    #     (mainBoard[0][0] == mainBoard[1][1] == mainBoard[2][2] == XMARK) or
+    #     (mainBoard[0][2] == mainBoard[1][1] == mainBoard[2][0] == XMARK)):
+    #
+    #     playerWins = True
+    #     computerWins = False
+    #     return playerWins, computerWins
+    #
+    # # Computer win by consecutive O mark
+    # elif ((mainBoard[0][0] == mainBoard[1][0] == mainBoard[2][0] == OMARK) or
+    #       (mainBoard[0][1] == mainBoard[1][1] == mainBoard[2][1] == OMARK) or
+    #       (mainBoard[0][2] == mainBoard[1][2] == mainBoard[2][2] == OMARK) or
+    #       (mainBoard[0][0] == mainBoard[0][1] == mainBoard[0][2] == OMARK) or
+    #       (mainBoard[1][0] == mainBoard[1][1] == mainBoard[1][2] == OMARK) or
+    #       (mainBoard[2][0] == mainBoard[2][1] == mainBoard[2][2] == OMARK) or
+    #       (mainBoard[0][0] == mainBoard[1][1] == mainBoard[2][2] == OMARK) or
+    #       (mainBoard[0][2] == mainBoard[1][1] == mainBoard[2][0] == OMARK)):
+    #
+    #     playerWins = False
+    #     computerWins = True
+    #     return playerWins, computerWins
+    #
+    # # No one won
+    # else:
+    # playerWins = False
+    # computerWins = False
 
-        playerWins = True
-        computerWins = False
-        return playerWins, computerWins
-
-    # Computer win by consecutive O mark
-    elif ((mainBoard[0][0] == mainBoard[1][0] == mainBoard[2][0] == OMARK) or
-          (mainBoard[0][1] == mainBoard[1][1] == mainBoard[2][1] == OMARK) or
-          (mainBoard[0][2] == mainBoard[1][2] == mainBoard[2][2] == OMARK) or
-          (mainBoard[0][0] == mainBoard[0][1] == mainBoard[0][2] == OMARK) or
-          (mainBoard[1][0] == mainBoard[1][1] == mainBoard[1][2] == OMARK) or
-          (mainBoard[2][0] == mainBoard[2][1] == mainBoard[2][2] == OMARK) or
-          (mainBoard[0][0] == mainBoard[1][1] == mainBoard[2][2] == OMARK) or
-          (mainBoard[0][2] == mainBoard[1][1] == mainBoard[2][0] == OMARK)):
-
-        playerWins = False
-        computerWins = True
-        return playerWins, computerWins
-
-    # No one won
-    else:
-        playerWins = False
-        computerWins = False
-        return playerWins, computerWins
+    # more valid things are
+    # return 'player'
+    # return 'computer'
+    return None
 
 
 '''
@@ -852,30 +1033,42 @@ Means, Board has still space left, return false to game over
 If no space left, it is a game over
 '''
 
-def gameOver(usedBoxes, mainBoard):
-    for boxx in range(BOARDWIDTH):
-        for boxy in range(BOARDHEIGHT):
-            if usedBoxes[boxx][boxy] == False:
-                return False
 
-    else:
-        return True
+def gameOver(usedBoxes, mainBoard):
+    for row in range(BIGBOXSIZE):
+        for column in range(BIGBOXSIZE):
+            for box_row in range(BIGBOXSIZE):
+                for box_column in range(BIGBOXSIZE):
+                    if mainBoard[row][column][box_row][box_column] is False:
+                        return False
+
+    return True
+
+    # for boxx in range(BOARDWIDTH):
+    #     for boxy in range(BOARDHEIGHT):
+    #         if usedBoxes[boxx][boxy] == False:
+    #             return False
+    #
+    # else:
+    #     return True
+    # return False
 
 
 '''
 Resets the game
 '''
-def boardReset(usedBoxes, mainBoard, playerTurnDone, playerWins, computerWins):
+
+
+def boardReset(mainBoard, playerTurnDone, playerWins, computerWins):
     pygame.time.wait(1000)
-    usedBoxes = makeEachBoxFalse(False)
     mainBoard = makeEachBoxFalse(False)
     playerTurnDone = False
     playerWins = computerWins = False
 
-    return usedBoxes, mainBoard, playerTurnDone, playerWins, computerWins
+    return mainBoard, playerTurnDone, playerWins, computerWins
 
 
-def highlightWin(mainBoard):
+def highlightWin(mainBoard, row, column, b1, b2, b3):
     '''
 
     :param mainBoard: Highlights the winning situation
@@ -884,45 +1077,48 @@ def highlightWin(mainBoard):
     #Note: Can be highly optimised if i pass around the winning boxes
     '''
 
-    scenario1 = 1
-    scenario2 = 2
-    scenario3 = 3
-    scenario4 = 4
-    scenario5 = 5
-    scenario6 = 6
-    scenario7 = 7
-    scenario8 = 8
-    
-    if mainBoard[0][0] == mainBoard[1][0] == mainBoard[2][0]:
-        highLightBoxes(mainBoard, scenario1)
+    # In the small box mainBoard[row][column], boxes b1, b2, b3 needs to be highlighted
 
-    
-    elif mainBoard[0][1] == mainBoard[1][1] == mainBoard[2][1]:
-        highLightBoxes(mainBoard, scenario2)
+    # scenario1 = 1
+    # scenario2 = 2
+    # scenario3 = 3
+    # scenario4 = 4
+    # scenario5 = 5
+    # scenario6 = 6
+    # scenario7 = 7
+    # scenario8 = 8
+    #
+    # if mainBoard[0][0] == mainBoard[1][0] == mainBoard[2][0]:
+    #     highLightBoxes(mainBoard, scenario1)
+    #
+    #
+    # elif mainBoard[0][1] == mainBoard[1][1] == mainBoard[2][1]:
+    #     highLightBoxes(mainBoard, scenario2)
+    #
+    #
+    # elif mainBoard[0][2] == mainBoard[1][2] == mainBoard[2][2]:
+    #     highLightBoxes(mainBoard, scenario3)
+    #
+    #
+    # elif mainBoard[0][0] == mainBoard[0][1] == mainBoard[0][2]:
+    #     highLightBoxes(mainBoard, scenario4)
+    #
+    #
+    # elif mainBoard[1][0] == mainBoard[1][1] == mainBoard[1][2]:
+    #     highLightBoxes(mainBoard, scenario5)
+    #
+    #
+    # elif mainBoard[2][0] == mainBoard[2][1] == mainBoard[2][2]:
+    #     highLightBoxes(mainBoard, scenario6)
+    #
+    #
+    # elif mainBoard[0][0] == mainBoard[1][1] == mainBoard[2][2]:
+    #     highLightBoxes(mainBoard, scenario7)
+    #
+    #
+    # elif mainBoard[2][0] == mainBoard[1][1] == mainBoard[0][2]:
+    #     highLightBoxes(mainBoard, scenario8)
 
-    
-    elif mainBoard[0][2] == mainBoard[1][2] == mainBoard[2][2]:
-        highLightBoxes(mainBoard, scenario3)
-
-    
-    elif mainBoard[0][0] == mainBoard[0][1] == mainBoard[0][2]:
-        highLightBoxes(mainBoard, scenario4)
-
-    
-    elif mainBoard[1][0] == mainBoard[1][1] == mainBoard[1][2]:
-        highLightBoxes(mainBoard, scenario5)
-
-    
-    elif mainBoard[2][0] == mainBoard[2][1] == mainBoard[2][2]:
-        highLightBoxes(mainBoard, scenario6)
-
-    
-    elif mainBoard[0][0] == mainBoard[1][1] == mainBoard[2][2]:
-        highLightBoxes(mainBoard, scenario7)
-
-    
-    elif mainBoard[2][0] == mainBoard[1][1] == mainBoard[0][2]:
-        highLightBoxes(mainBoard, scenario8)
 
 '''
 @:Objective : Draws a line after someone won
@@ -931,65 +1127,64 @@ Handles each win case separately with magic numbers
 
 NOTE : Remove magic numbers
 '''
-def highLightBoxes(mainBoard, scenario):
 
+
+def highLightBoxes(mainBoard, scenario):
     if scenario == 1:
-        startPos = (XMARGIN + (BOXSIZE/2), YMARGIN + (BOXSIZE/2))
-        endPos = (XMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2), YMARGIN + (BOXSIZE/2))
-        
+        startPos = (XMARGIN + (BOXSIZE / 2), YMARGIN + (BOXSIZE / 2))
+        endPos = (XMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2), YMARGIN + (BOXSIZE / 2))
 
         pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
 
     elif scenario == 2:
-        startPos = (XMARGIN + (BOXSIZE/2), YMARGIN + BOXSIZE + GAPSIZE + (BOXSIZE/2))
-        endPos = (XMARGIN + (BOXSIZE/2) + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE, YMARGIN + BOXSIZE + GAPSIZE + (BOXSIZE/2))
-
+        startPos = (XMARGIN + (BOXSIZE / 2), YMARGIN + BOXSIZE + GAPSIZE + (BOXSIZE / 2))
+        endPos = (
+            XMARGIN + (BOXSIZE / 2) + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE,
+            YMARGIN + BOXSIZE + GAPSIZE + (BOXSIZE / 2))
 
         pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
 
     elif scenario == 3:
-        startPos = (XMARGIN + (BOXSIZE/2), YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2))
-        endPos = (XMARGIN + (BOXSIZE/2) + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE, YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2))
-
+        startPos = (XMARGIN + (BOXSIZE / 2), YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2))
+        endPos = (XMARGIN + (BOXSIZE / 2) + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE,
+                  YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2))
 
         pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
 
     elif scenario == 4:
-        startPos = (XMARGIN + (BOXSIZE/2), YMARGIN + (BOXSIZE/2))
-        endPos = (XMARGIN + (BOXSIZE/2), YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2))
-        
+        startPos = (XMARGIN + (BOXSIZE / 2), YMARGIN + (BOXSIZE / 2))
+        endPos = (XMARGIN + (BOXSIZE / 2), YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2))
 
         pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
 
     elif scenario == 5:
-        startPos = (XMARGIN + BOXSIZE + GAPSIZE + (BOXSIZE/2), YMARGIN + (BOXSIZE/2))
-        endPos = (XMARGIN + BOXSIZE + GAPSIZE + (BOXSIZE/2), YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2))
-        
+        startPos = (XMARGIN + BOXSIZE + GAPSIZE + (BOXSIZE / 2), YMARGIN + (BOXSIZE / 2))
+        endPos = (
+            XMARGIN + BOXSIZE + GAPSIZE + (BOXSIZE / 2),
+            YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2))
 
         pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
 
     elif scenario == 6:
-        startPos = (XMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2), YMARGIN + (BOXSIZE/2))
-        endPos = (XMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2), YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2))
-        
+        startPos = (XMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2), YMARGIN + (BOXSIZE / 2))
+        endPos = (XMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2),
+                  YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2))
 
         pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
 
     elif scenario == 7:
-        startPos = (XMARGIN + (BOXSIZE/2), YMARGIN + (BOXSIZE/2))
-        endPos = (XMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2), YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2))
+        startPos = (XMARGIN + (BOXSIZE / 2), YMARGIN + (BOXSIZE / 2))
+        endPos = (XMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2),
+                  YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2))
 
-        
         pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
 
     elif scenario == 8:
-        startPos = (XMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2), YMARGIN + (BOXSIZE/2))
-        endPos = (XMARGIN + (BOXSIZE/2), YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE/2))
-        
+        startPos = (XMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2), YMARGIN + (BOXSIZE / 2))
+        endPos = (XMARGIN + (BOXSIZE / 2), YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2))
 
         pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
-    
-        
+
 
 def warGameEnding(smallFont, COMPUTERVOICE):
     COMPUTERVOICE.play()
@@ -1000,23 +1195,20 @@ def warGameEnding(smallFont, COMPUTERVOICE):
     computerMessage1 = smallFont.render('A strange game...', True, COMBLUE, BGCOLOR)
     # Shift its rectangle to the position where you want the text
     computerMessage1Rect = computerMessage1.get_rect()
-    computerMessage1Rect.x = XMARGIN/3
+    computerMessage1Rect.x = XMARGIN / 3
     computerMessage1Rect.y = YMARGIN * 2
 
     # uncover the words - draw computerMessage1 inside rectangle computerMessage1Rect
     uncoverWords(computerMessage1, computerMessage1Rect)
     pygame.time.wait(1000)
-        
 
     computerMessage2 = smallFont.render('The only winning move is not to play.', True, COMBLUE, BGCOLOR)
     computerMessage2Rect = computerMessage2.get_rect()
-    computerMessage2Rect.x = XMARGIN/3
+    computerMessage2Rect.x = XMARGIN / 3
     computerMessage2Rect.centery = (YMARGIN * 2) + 50
 
     uncoverWords(computerMessage2, computerMessage2Rect)
     pygame.time.wait(3000)
-
-
 
 
 def uncoverWords(text, textRect):
@@ -1043,9 +1235,6 @@ def uncoverWords(text, textRect):
         blackRect.x += revealSpeed
         blackRect.width -= revealSpeed
 
-    
-    
 
 if __name__ == '__main__':
     main()
-
