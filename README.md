@@ -12,3 +12,14 @@ starting to manipulate and see what's possible.
 - [X] Document the prototype
 - [ ] Refer books, gain more pygame knowledge 
 - [ ] Define rules for new extended version
+- [X] Define data structure
+- [X] Start coding
+- [X] Implement User 
+- [ ] Implement AI
+- [ ] Graphics prototype
+- [ ] Implementing
+		- [ ] small box win
+		- [ ] winning Line graphics
+		- [ ] Big win
+		- [ ] Game over
+		- [ ] Tie
