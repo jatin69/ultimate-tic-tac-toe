@@ -19,11 +19,15 @@ starting to manipulate and see what's possible.
 - [ ] Implement AI
 - [ ] Graphics prototype
 - [ ] Implementing
-		- [ ] small box win
-		- [ ] winning Line graphics
-		- [ ] Big win
+		- [X] small box win
+		- [X] winning Line graphics
+		- [ ] Big win - TO DO NEXT
+		- [ ] Big win line
 		- [ ] Game over
 		- [ ] Tie
+
+- [ ] clean up comments	
+- [ ] Brush up code PEP8 style
 
 
 ## Rules
