@@ -2,15 +2,7 @@ import pygame, sys, random, copy
 from pygame.locals import *
 
 
-
 """
-todo - done
-sync difference when a small game is won
-what i wanna do -
-mark -> dehighlight -> pause -> line -> pause -> highlight others
-## effect achieved
-
-all working in player -> also update computer once ready
 NEXT GOALs ->>
 
 Implement big join - mega win
@@ -20,10 +12,6 @@ analyse timings -> do as required
 commit --
 see function independencies -> experiment some shit
 set game_loop.md as per it
-
-
-
-
 """
 
 
@@ -39,11 +27,7 @@ theBoard = {'top-L': 'O', 'top-M': 'O', 'top-R': 'O',
 
 
 
-# CONSTANTS, yo
-
-# ============== NEXT TIME =============
-# Run and analyse
-
+# CONSTANTS
 
 # Game window width and height
 makeFullscreen = True
@@ -188,21 +172,17 @@ def main():
     # Initially used boxes
     # usedBoxes = makeEachBoxFalse(False)
 
-    # Player turn : bool variable
-    game_turn = 'player'
 
     # Paint the surface black
     DISPLAYSURFACE.fill(BGCOLOR)
 
-    '''
-    Draw all the required lines
-    '''
+    # Draw all the required lines
     drawLines()
-
-    # highlight(mainBoard, 0)
 
     # The GRAND game loop
 
+    # Player turn : bool variable
+    game_turn = 'player'
     expected_row = None
     expected_column = None
 
@@ -210,6 +190,7 @@ def main():
 
         # set mouseClick as False
         mouseClicked = False
+
 
         # did the player move
         moved = False
@@ -241,59 +222,56 @@ def main():
         if mousex is not None and mousey is not None:
             row, column, box_row, box_column = getBoxAtPixel(mousex, mousey)
 
-
         # correct here, perfect
         # print(row, column, box_row, box_column)
-
-
 
         # Firstmost turn
 
         # This code just highlights
         # actual law enforcement must be done
 
-
         # mouse is clicked + not first time
-        if mouseClicked and expected_column is not None and expected_row is not None and row is not None and column is not None:
+        if mouseClicked and expected_column is not None and expected_row is not None \
+                and row is not None and column is not None:
 
             if expected_row == 'any' and expected_column == 'any':
                 if winner_records[row][column][0]['winner'] != None:
                     row = None
                     column = None
-                # for i in range(3):
-                #     for j in range(3):
-                #         # match entered row and stuff
-                #         if row == i and column == j:
-                #             # If not a non winner - reject
-                #             if winner_records[i][j][0]['winner'] != None:
-                #                 row = None
-                #                 column = None
-                #                 # matched with clicked box
-
-
 
             # + row does not match expected
-            elif (row != expected_row or column != expected_column):
+            elif row != expected_row or column != expected_column:
                 row = None
                 column = None
                 pygame.display.update()
                 highlight(mainBoard, expected_row, expected_column, GREEN)
 
-                # print(row, column)
+            # print(row, column)
 
         # If Inside the board, move forward, else ignore
         if row is not None and column is not None and box_row is not None and box_column is not None:
 
-            if game_turn == 'player' and mainBoard[row][column][box_row][box_column] is False and mouseClicked:
-                markBox(row, column, box_row, box_column, mainFont, XMARK)
-                BEEP1.play()
-                mainBoard[row][column][box_row][box_column] = XMARK
+            if mainBoard[row][column][box_row][box_column] is False and mouseClicked:
+
+                MARK, BEEP = None, None
+
+                if game_turn == 'player':
+                    MARK = XMARK
+                    BEEP = BEEP1
+                    game_turn = 'computer'
+
+                elif game_turn == 'computer':
+                    MARK = OMARK
+                    BEEP = BEEP2
+                    game_turn = 'player'
+
+
+                markBox(row, column, box_row, box_column, mainFont, MARK)
+                mainBoard[row][column][box_row][box_column] = MARK
                 moved = True
                 pygame.display.update()
+                BEEP.play()
                 # Player turn done
-
-                # game_turn = 'player'
-                game_turn = 'computer'
 
                 expected_row = box_row
                 expected_column = box_column
@@ -304,18 +282,13 @@ def main():
                 for i in range(3):
                     for j in range(3):
                         dehighlight(mainBoard, i, j)
+
                 pygame.display.update()
 
                 if moved is True:
 
-                    # if winner_records[expected_row][expected_column][0]['winner'] is not None:
-                    #     expected_row = 'any'
-                    #     expected_column = 'any'
-
-
                     if winner_records[row][column][0]['winner'] is None:
                         winner, b1, b2, b3 = smallGameWon(mainBoard, row, column, box_row, box_column)
-
                     else:
                         winner = winner_records[row][column][0]['winner']
                         b1 = winner_records[row][column][0]['winner_tuple'][0]
@@ -331,7 +304,6 @@ def main():
                         winner_records[row][column][0]['winner_tuple'] = (b1, b2, b3)
 
                     elif winner is 'player':
-
                         playerScore += 1
                         pygame.time.wait(500)
                         highlightWin(mainBoard, row, column, b1, b2, b3)
@@ -354,9 +326,8 @@ def main():
                         # DISPLAYSURFACE.fill(BGCOLOR)
                         # drawLines()
 
-
                 pygame.display.update()
-                #highlight(mainBoard, expected_row, expected_column, GREEN)
+                # highlight(mainBoard, expected_row, expected_column, GREEN)
 
                 if winner_records[expected_row][expected_column][0]['winner'] is not None:
                     expected_row = 'any'
@@ -371,255 +342,16 @@ def main():
                             # else:
                             #     dehighlight(mainBoard, i, j)
 
-
                 else:
                     # just green color
                     highlight(mainBoard, expected_row, expected_column, GREEN)
-
-
-
-                    # highlight all expect this, make it red
-                    # neh, not now - later RED
-                    # highlight(mainBoard, expected_row, expected_column, RED)
-                    # for i in range(3):
-                    #     for j in range(3):
-                    #         if winner_records[i][j][0]['winner'] is None:
-                    #             highlight(mainBoard, i, j, GREEN)
-                    #         else:
-                    #             dehighlight(mainBoard, i, j)
-                    #
-                    # expected_row = 'any'
-                    # expected_column = 'any'
-
-                # else:
-                #     # highlight needed and dehighlight all
-                #     highlight(mainBoard, expected_row, expected_column, GREEN)
-                #     for i in range(3):
-                #         for j in range(3):
-                #             if i==expected_row and j==expected_column:
-                #                 highlight(mainBoard, i, j, GREEN)
-                #             else:
-                #                 dehighlight(mainBoard, i, j)
-                #     # just redundant checks
-                #     expected_row = i
-                #     expected_column = j
 
                 pygame.time.wait(500)
                 #pygame.display.update()
 
-
-            # make it mouse clickable for now, add AI Later
-            elif game_turn == 'computer' and mainBoard[row][column][box_row][box_column] is False and mouseClicked:
-                # derive move from AI later
-                markBox(row, column, box_row, box_column, mainFont, OMARK)
-                moved = True
-                BEEP2.play()
-                mainBoard[row][column][box_row][box_column] = OMARK
-                # Player turn done
-                game_turn = 'player'
-
-                expected_row = box_row
-                expected_column = box_column
-
-
-                if moved is True:
-
-                    # if winner_records[expected_row][expected_column][0]['winner'] is not None:
-                    #     expected_row = 'any'
-                    #     expected_column = 'any'
-
-
-                    if winner_records[row][column][0]['winner'] is None:
-                        winner, b1, b2, b3 = smallGameWon(mainBoard, row, column, box_row, box_column)
-
-                    else:
-                        winner = winner_records[row][column][0]['winner']
-                        b1 = winner_records[row][column][0]['winner_tuple'][0]
-                        b2 = winner_records[row][column][0]['winner_tuple'][1]
-                        b3 = winner_records[row][column][0]['winner_tuple'][2]
-
-                    # If player won, highlight the boxes, play sound, reset board for next turn
-                    # print(winner, row, column, b1, b2, b3)
-                    # Returned when no more space left
-                    if winner is 'tie':
-                        tieScore += 1
-                        winner_records[row][column][0]['winner'] = 'tie'
-                        winner_records[row][column][0]['winner_tuple'] = (b1, b2, b3)
-
-                    elif winner is 'player':
-
-                        playerScore += 1
-                        pygame.time.wait(500)
-                        highlightWin(mainBoard, row, column, b1, b2, b3)
-                        BEEP3.play()
-                        winner_records[row][column][0]['winner'] = 'player'
-                        winner_records[row][column][0]['winner_tuple'] = (b1, b2, b3)
-                        pygame.display.update()
-
-                    elif winner is 'computer':
-                        computerScore += 1
-                        pygame.time.wait(500)
-                        highlightWin(mainBoard, row, column, b1, b2, b3)
-                        BEEP3.play()
-                        winner_records[row][column][0]['winner'] = 'player'
-                        winner_records[row][column][0]['winner_tuple'] = (b1, b2, b3)
-                        pygame.display.update()
-
-                        # No reset required in our case.
-                        # mainBoard, playerTurnDone, playerWins, computerWins = boardReset(mainBoard, playerTurnDone, playerWins, computerWins)
-                        # DISPLAYSURFACE.fill(BGCOLOR)
-                        # drawLines()
-
-                # remove green color
-                # dehighlight(mainBoard, row, column)
-                # In case of any, i gotta dehighlight everything..... focus
-                for i in range(3):
-                    for j in range(3):
-                        dehighlight(mainBoard, i, j)
-
-                pygame.display.update()
-                # highlight(mainBoard, expected_row, expected_column, GREEN)
-
-                if winner_records[expected_row][expected_column][0]['winner'] is not None:
-                    expected_row = 'any'
-                    expected_column = 'any'
-
-                    if expected_row == 'any' and expected_column == 'any':
-                        # highlight all valid boxes
-                        for i in range(3):
-                            for j in range(3):
-                                if winner_records[i][j][0]['winner'] is None:
-                                    highlight(mainBoard, i, j, GREEN)
-                                # else:
-                                #     dehighlight(mainBoard, i, j)
-
-
-                else:
-                    # just green color
-                    highlight(mainBoard, expected_row, expected_column, GREEN)
-
-
-
-                    # highlight all expect this, make it red
-                    # neh, not now - later RED
-                    # highlight(mainBoard, expected_row, expected_column, RED)
-                    # for i in range(3):
-                    #     for j in range(3):
-                    #         if winner_records[i][j][0]['winner'] is None:
-                    #             highlight(mainBoard, i, j, GREEN)
-                    #         else:
-                    #             dehighlight(mainBoard, i, j)
-                    #
-                    # expected_row = 'any'
-                    # expected_column = 'any'
-
-                # else:
-                #     # highlight needed and dehighlight all
-                #     highlight(mainBoard, expected_row, expected_column, GREEN)
-                #     for i in range(3):
-                #         for j in range(3):
-                #             if i==expected_row and j==expected_column:
-                #                 highlight(mainBoard, i, j, GREEN)
-                #             else:
-                #                 dehighlight(mainBoard, i, j)
-                #     # just redundant checks
-                #     expected_row = i
-                #     expected_column = j
-
-                pygame.time.wait(500)
-                pygame.display.update()
-
-
-        # If box is not already used, & mouse if clicked just now, move forward
-        # WORK REQUIRED here
-        # If Inside the board, move forward, else ignore
-        # if boxx != None and boxy != None:
-        #
-        #     # If box is not already used, & mouse if clicked just now, move forward
-        #     if not usedBoxes[boxx][boxy] and mouseClicked and playerTurnDone is False:
-        #         # DRAW X
-        #         markBoxX(boxx, boxy, mainFont)
-        #         # Play sound
-        #         BEEP1.play()
-        #
-        #         # set true to used Boxes
-        #         usedBoxes[boxx][boxy] = True
-        #         # Mark mainboard
-        #         mainBoard[boxx][boxy] = XMARK
-        #         # Player turn done
-        #         playerTurnDone = True
-        #
-        #         # Update display - early update
-        #         # Needs update, or the last iteration isn't displayed.
-        #         # Further, to solve this issue, we could extend one iteration,
-        #         # But this approach is also cool, so good
-        #         pygame.display.update()
-        #
-        #     # If computer turn, play the move
-        #     elif playerTurnDone == True:
-        #         # a little delay - time pause for 500 ms
-        #         pygame.time.wait(500)
-        #
-        #
-        #         # derive the boxes to be marked with AI
-        #         boxx, boxy = computerTurnWithAI(usedBoxes, mainBoard)
-        #         # AI processed.
-        #
-        #         # mark box, play sound
-        #         markBoxO(boxx, boxy, mainFont)
-        #         BEEP2.play()
-        #         # update tables
-        #         usedBoxes[boxx][boxy] = True
-        #         mainBoard[boxx][boxy] = OMARK
-        #         # next is player turn
-        #         playerTurnDone = False
-        #         pygame.display.update()
-
-        # Check if anyone won the game, after the previous move
-
-        # return a, b, c as three consecutive boxes which helped won
-        # a= (box_row1, box_column1) , similarly all 3
-        # a, b, c are tuples
-
-
-        # will add this
-        # maintain a WINNERMATRIX for big board
-        # winner = gameWon(mainBoard)
-
-
-        # else:
-        #     if gameOver(mainBoard):
-        #         tieScore += 1
-        #         mainBoard, playerTurnDone, playerWins, computerWins = boardReset(mainBoard,
-        #                                                                          playerTurnDone, playerWins,
-        #                                                                          computerWins)
-        #         DISPLAYSURFACE.fill(BGCOLOR)
-        #         drawLines()
-
-        # Time to END THE GAME
-        # if tieScore >= 1:
-        #     DISPLAYSURFACE.fill(BGCOLOR)
-        #     pygame.display.update()
-        #     pygame.time.wait(1000)
-        #     # end game credits
-        #     warGameEnding(smallFont, COMPUTERVOICE)
-        #     pygame.display.update()
-        #
-        #     # RESET BOARD
-        #     mainBoard, playerTurnDone, playerWins, computerWins = boardReset(mainBoard,
-        #                                                                      playerTurnDone, playerWins,
-        #                                                                      computerWins)
-        #     tieScore = 0
-        #     playerScore = 0
-        #     computerScore = 0
-        #     DISPLAYSURFACE.fill(BGCOLOR)
-        #     drawLines()
-
-        # score board
         drawScoreBoard(smallFont, playerScore, computerScore, tieScore)
 
         # Render the updated graphics on screen
-
         pygame.display.update()
 
         # Tick the CLOCK
@@ -971,55 +703,6 @@ def smallGameWon(mainBoard, row, column, box_row, box_column):
     return winner, box1, box2, box3
 
 
-    # If no one won, and no space is left, it is a TIE, as set as default
-
-
-    # winning tiny boxes coordinates
-    # Player win by consecutive X mark
-    # if ((mainBoard[0][0] == mainBoard[1][0] == mainBoard[2][0] == XMARK) or
-    #     (mainBoard[0][1] == mainBoard[1][1] == mainBoard[2][1] == XMARK) or
-    #     (mainBoard[0][2] == mainBoard[1][2] == mainBoard[2][2] == XMARK) or
-    #     (mainBoard[0][0] == mainBoard[0][1] == mainBoard[0][2] == XMARK) or
-    #     (mainBoard[1][0] == mainBoard[1][1] == mainBoard[1][2] == XMARK) or
-    #     (mainBoard[2][0] == mainBoard[2][1] == mainBoard[2][2] == XMARK) or
-    #     (mainBoard[0][0] == mainBoard[1][1] == mainBoard[2][2] == XMARK) or
-    #     (mainBoard[0][2] == mainBoard[1][1] == mainBoard[2][0] == XMARK)):
-    #
-    #     playerWins = True
-    #     computerWins = False
-    #     return playerWins, computerWins
-    #
-    # # Computer win by consecutive O mark
-    # elif ((mainBoard[0][0] == mainBoard[1][0] == mainBoard[2][0] == OMARK) or
-    #       (mainBoard[0][1] == mainBoard[1][1] == mainBoard[2][1] == OMARK) or
-    #       (mainBoard[0][2] == mainBoard[1][2] == mainBoard[2][2] == OMARK) or
-    #       (mainBoard[0][0] == mainBoard[0][1] == mainBoard[0][2] == OMARK) or
-    #       (mainBoard[1][0] == mainBoard[1][1] == mainBoard[1][2] == OMARK) or
-    #       (mainBoard[2][0] == mainBoard[2][1] == mainBoard[2][2] == OMARK) or
-    #       (mainBoard[0][0] == mainBoard[1][1] == mainBoard[2][2] == OMARK) or
-    #       (mainBoard[0][2] == mainBoard[1][1] == mainBoard[2][0] == OMARK)):
-    #
-    #     playerWins = False
-    #     computerWins = True
-    #     return playerWins, computerWins
-    #
-    # # No one won
-    # else:
-    # playerWins = False
-    # computerWins = False
-
-    # more valid things are
-    # return 'player'
-    # return 'computer'
-    # return None
-
-
-    # b1 = ()
-    # b2 = ()
-    # b3 = ()
-    # return winner, b1, b2, b3
-
-
 def dehighlight(mainBoard, row, column):
     '''
     De highlight stuff
@@ -1035,7 +718,6 @@ def dehighlight(mainBoard, row, column):
     width = 3 * (BOXSIZE + GAPSIZE)
     height = 3 * (BOXSIZE + GAPSIZE)
 
-    highlight_box_color = (140, 255, 26)
     horizRect1 = pygame.Rect(left, top, width, height)
 
     # highlight
@@ -1435,51 +1117,6 @@ def computerTurnWithAI(usedBoxes, mainBoard):
 
 ##### Functions dealing with an end of game ########
 
-'''
-Function : gameWon()
-Purpose: Checks all the 8 scenarios of game winning and return the winner, if any
-'''
-
-
-def gameWon(mainBoard):
-    # Player win by consecutive X mark
-    # if ((mainBoard[0][0] == mainBoard[1][0] == mainBoard[2][0] == XMARK) or
-    #     (mainBoard[0][1] == mainBoard[1][1] == mainBoard[2][1] == XMARK) or
-    #     (mainBoard[0][2] == mainBoard[1][2] == mainBoard[2][2] == XMARK) or
-    #     (mainBoard[0][0] == mainBoard[0][1] == mainBoard[0][2] == XMARK) or
-    #     (mainBoard[1][0] == mainBoard[1][1] == mainBoard[1][2] == XMARK) or
-    #     (mainBoard[2][0] == mainBoard[2][1] == mainBoard[2][2] == XMARK) or
-    #     (mainBoard[0][0] == mainBoard[1][1] == mainBoard[2][2] == XMARK) or
-    #     (mainBoard[0][2] == mainBoard[1][1] == mainBoard[2][0] == XMARK)):
-    #
-    #     playerWins = True
-    #     computerWins = False
-    #     return playerWins, computerWins
-    #
-    # # Computer win by consecutive O mark
-    # elif ((mainBoard[0][0] == mainBoard[1][0] == mainBoard[2][0] == OMARK) or
-    #       (mainBoard[0][1] == mainBoard[1][1] == mainBoard[2][1] == OMARK) or
-    #       (mainBoard[0][2] == mainBoard[1][2] == mainBoard[2][2] == OMARK) or
-    #       (mainBoard[0][0] == mainBoard[0][1] == mainBoard[0][2] == OMARK) or
-    #       (mainBoard[1][0] == mainBoard[1][1] == mainBoard[1][2] == OMARK) or
-    #       (mainBoard[2][0] == mainBoard[2][1] == mainBoard[2][2] == OMARK) or
-    #       (mainBoard[0][0] == mainBoard[1][1] == mainBoard[2][2] == OMARK) or
-    #       (mainBoard[0][2] == mainBoard[1][1] == mainBoard[2][0] == OMARK)):
-    #
-    #     playerWins = False
-    #     computerWins = True
-    #     return playerWins, computerWins
-    #
-    # # No one won
-    # else:
-    # playerWins = False
-    # computerWins = False
-
-    # more valid things are
-    # return 'player'
-    # return 'computer'
-    return None
-
 
 '''
 @:Function : gameOver
@@ -1570,112 +1207,6 @@ def highlightWin(mainBoard, row, column, b1, b2, b3):
     # return startPos, endPos
 
     # In the small box mainBoard[row][column], boxes b1, b2, b3 needs to be highlighted
-
-    # scenario1 = 1
-    # scenario2 = 2
-    # scenario3 = 3
-    # scenario4 = 4
-    # scenario5 = 5
-    # scenario6 = 6
-    # scenario7 = 7
-    # scenario8 = 8
-    #
-    # if mainBoard[0][0] == mainBoard[1][0] == mainBoard[2][0]:
-    #     highLightBoxes(mainBoard, scenario1)
-    #
-    #
-    # elif mainBoard[0][1] == mainBoard[1][1] == mainBoard[2][1]:
-    #     highLightBoxes(mainBoard, scenario2)
-    #
-    #
-    # elif mainBoard[0][2] == mainBoard[1][2] == mainBoard[2][2]:
-    #     highLightBoxes(mainBoard, scenario3)
-    #
-    #
-    # elif mainBoard[0][0] == mainBoard[0][1] == mainBoard[0][2]:
-    #     highLightBoxes(mainBoard, scenario4)
-    #
-    #
-    # elif mainBoard[1][0] == mainBoard[1][1] == mainBoard[1][2]:
-    #     highLightBoxes(mainBoard, scenario5)
-    #
-    #
-    # elif mainBoard[2][0] == mainBoard[2][1] == mainBoard[2][2]:
-    #     highLightBoxes(mainBoard, scenario6)
-    #
-    #
-    # elif mainBoard[0][0] == mainBoard[1][1] == mainBoard[2][2]:
-    #     highLightBoxes(mainBoard, scenario7)
-    #
-    #
-    # elif mainBoard[2][0] == mainBoard[1][1] == mainBoard[0][2]:
-    #     highLightBoxes(mainBoard, scenario8)
-
-
-'''
-@:Objective : Draws a line after someone won
-@approach :
-Handles each win case separately with magic numbers
-
-NOTE : Remove magic numbers
-'''
-
-
-def highLightBoxes(mainBoard, scenario):
-    if scenario == 1:
-        startPos = (XMARGIN + (BOXSIZE / 2), YMARGIN + (BOXSIZE / 2))
-        endPos = (XMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2), YMARGIN + (BOXSIZE / 2))
-
-        pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
-
-    elif scenario == 2:
-        startPos = (XMARGIN + (BOXSIZE / 2), YMARGIN + BOXSIZE + GAPSIZE + (BOXSIZE / 2))
-        endPos = (
-            XMARGIN + (BOXSIZE / 2) + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE,
-            YMARGIN + BOXSIZE + GAPSIZE + (BOXSIZE / 2))
-
-        pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
-
-    elif scenario == 3:
-        startPos = (XMARGIN + (BOXSIZE / 2), YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2))
-        endPos = (XMARGIN + (BOXSIZE / 2) + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE,
-                  YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2))
-
-        pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
-
-    elif scenario == 4:
-        startPos = (XMARGIN + (BOXSIZE / 2), YMARGIN + (BOXSIZE / 2))
-        endPos = (XMARGIN + (BOXSIZE / 2), YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2))
-
-        pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
-
-    elif scenario == 5:
-        startPos = (XMARGIN + BOXSIZE + GAPSIZE + (BOXSIZE / 2), YMARGIN + (BOXSIZE / 2))
-        endPos = (
-            XMARGIN + BOXSIZE + GAPSIZE + (BOXSIZE / 2),
-            YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2))
-
-        pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
-
-    elif scenario == 6:
-        startPos = (XMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2), YMARGIN + (BOXSIZE / 2))
-        endPos = (XMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2),
-                  YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2))
-
-        pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
-
-    elif scenario == 7:
-        startPos = (XMARGIN + (BOXSIZE / 2), YMARGIN + (BOXSIZE / 2))
-        endPos = (XMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2),
-                  YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2))
-
-        pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
-
-    elif scenario == 8:
-        startPos = (XMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2), YMARGIN + (BOXSIZE / 2))
-        endPos = (XMARGIN + (BOXSIZE / 2), YMARGIN + BOXSIZE + GAPSIZE + BOXSIZE + GAPSIZE + (BOXSIZE / 2))
-
-        pygame.draw.line(DISPLAYSURFACE, LINECOLOR, startPos, endPos, 10)
 
 
 def warGameEnding(smallFont, COMPUTERVOICE):
