@@ -5,11 +5,9 @@ from pygame.locals import *
 """
 NEXT GOALs ->>
 
-Implement big join - mega win
-- commit
-clean up code a bit -> removing extra comments 
-analyse timings -> do as required 
-commit --
+modify score card 
+Manage screens -> commit
+bundle up -> commit -> release
 see function independencies -> experiment some shit
 set game_loop.md as per it
 """
@@ -31,8 +29,10 @@ theBoard = {'top-L': 'O', 'top-M': 'O', 'top-R': 'O',
 
 # Game window width and height
 makeFullscreen = True
+
 # If fullscreen, use user's current resolution
 makeFullscreen = False
+
 # else use these window coordinates
 # else use these window coordinates
 WINDOWWIDTH = 800
@@ -148,9 +148,9 @@ def main(level):
     tieScore = 0
 
     # testing variables
-    playerScore = 3
-    computerScore = 6
-    tieScore = 0
+    # playerScore = 3
+    # computerScore = 6
+    # tieScore = 0
 
     playerWins = False
     computerWins = False
@@ -313,6 +313,7 @@ def main(level):
                         tieScore += 1
                         winner_records[row][column][0]['winner'] = 'tie'
                         winner_records[row][column][0]['winner_tuple'] = (b1, b2, b3)
+                        # in case of tie, b1 is none >>> handle later
 
                     elif winner is 'player':
                         playerScore += 1
@@ -321,6 +322,7 @@ def main(level):
                         BEEP3.play()
                         winner_records[row][column][0]['winner'] = 'X'
                         winner_records[row][column][0]['winner_tuple'] = (b1, b2, b3)
+                        #print(winner_records[row][column][0]['winner_tuple'])
                         pygame.display.update()
 
                     elif winner is 'computer':
@@ -330,6 +332,7 @@ def main(level):
                         BEEP3.play()
                         winner_records[row][column][0]['winner'] = 'O'
                         winner_records[row][column][0]['winner_tuple'] = (b1, b2, b3)
+                        #print(winner_records[row][column][0]['winner_tuple'])
                         pygame.display.update()
 
                         # No reset required in our case.
@@ -372,11 +375,12 @@ def main(level):
 
             # // check who wins and alos tue
             if mega_winner is not None:
+                drawWinner(smallFont, mega_winner)
                 if mega_winner == 'tie':
                     # fill bg black and etc display
                     # tie display on screen
                     game_done = True
-                    # pass
+
                 else:
                     for row in range(3):
                         for col in range(3):
@@ -385,11 +389,11 @@ def main(level):
                             else:
                                 dehighlight(mainBoard, row, col)
 
-
         elif level == "smart":
             mega_winner, mb1, mb2, mb3 = checkMegaWinHeadOn(mainBoard, winner_records)
 
             if mega_winner is not None:
+                drawWinner(smallFont, mega_winner)
                 if mega_winner == 'tie':
                     # fill bg black and etc display
                     # tie display on screen
@@ -429,10 +433,6 @@ def highlightMegaWin(mainBoard, mega_winner, mb1, mb2, mb3):
     highlight(mainBoard, mb1[0], mb1[1], RED)
     highlight(mainBoard, mb2[0], mb2[1], RED)
     highlight(mainBoard, mb3[0], mb3[1], RED)
-
-
-
-
 
 
 def checkMegaWinEasy(mainBoard, winner_records):
@@ -521,50 +521,10 @@ def checkMegaWinHeadOn(mainBoard, winner_records):
 
     return mega_winner, mb1, mb2, mb3
 
-
-
-
-
-
 '''
 @objective : draw the lines that appear in the main board
 @usage     : This function will be used to draw 9 lines
 '''
-
-# old draw lines
-'''
-def drawLines():
-    # works fine. But we need more sophisticated graphics.
-    #:return:
-    
-    left = XMARGIN
-    top = YMARGIN
-
-    ########HORIZONTAL LINES ##########
-    # Length of horizontal line
-    width = (BOXSIZE + GAPSIZE) * BOARDWIDTH
-    # height of line
-    height = GAPSIZE
-
-    # DRAW 8 lines
-    for line_no in range(1, BOARDSIZE):
-        #  horizontal rectangle needs to be drawn from top
-        horizRect1 = pygame.Rect(left, top + line_no*(BOXSIZE + GAPSIZE), width, height)
-        pygame.draw.rect(DISPLAYSURFACE, GREEN, horizRect1)
-
-
-    #######VERTICAL LINES########
-
-    # swap because, they both are opposite for horizontal and vertical lines
-    width, height = height, width
-
-    # DRAW 8 lines
-    for line_no in range(1, BOARDSIZE):
-        #  horizontal rectangle needs to be drawn from top
-        horizRect1 = pygame.Rect(left + line_no*(BOXSIZE + GAPSIZE), top, width, height)
-        pygame.draw.rect(DISPLAYSURFACE, WHITE, horizRect1)
-'''
-
 
 # experimental
 # Does not interfere with new data structure
@@ -772,6 +732,8 @@ def initialise_new_game(val):
     ]
 
     # convert it to looping structure
+
+    # values for testing purpose
     usedBoxes = [
         [
             [
@@ -905,6 +867,147 @@ def initialise_new_game(val):
         ]  # big row zero
     ]
 
+    usedBoxes = [
+        [
+            [
+                [False, False, False],  # small box row 0
+                [False, False, False],  # small box row 1
+                [False, False, False]  # small box row 2
+            ],  # small box 0
+
+            [
+                [False, False, False],  # small box row 0
+                [False, False, False],  # small box row 1
+                [False, False, False]  # small box row 2
+            ],  # small box 1
+
+            [
+                [False, False, False],  # small box row 0
+                [False, False, False],  # small box row 1
+                [False, False, False]  # small box row 2
+            ]  # small box 2
+        ],  # big row zero
+
+        [
+            [
+                [False, False, False],  # small box row 0
+                [False, False, False],  # small box row 1
+                [False, False, False]  # small box row 2
+            ],  # small box 0
+
+            [
+                [False, False, False],  # small box row 0
+                [False, False, False],  # small box row 1
+                [False, False, False]  # small box row 2
+            ],  # small box 1
+
+            [
+                [False, False, False],  # small box row 0
+                [False, False, False],  # small box row 1
+                [False, False, False]  # small box row 2
+            ]  # small box 2
+        ],  # big row one
+
+        [
+            [
+                [False, False, False],  # small box row 0
+                [False, False, False],  # small box row 1
+                [False, False, False]  # small box row 2
+            ],  # small box 0
+
+            [
+                [False, False, False],  # small box row 0
+                [False, False, False],  # small box row 1
+                [False, False, False]  # small box row 2
+            ],  # small box 1
+
+            [
+                [False, False, False],  # small box row 0
+                [False, False, False],  # small box row 1
+                [False, False, False]  # small box row 2
+            ]  # small box 2
+        ]  # big row two
+    ]
+    winner_records = [
+        [
+            [
+                {
+                    'winner': None,
+                    'winner_tuple': None
+
+                },
+            ],  # small box 0
+
+            [
+                {
+                    'winner': None,
+                    'winner_tuple': None
+
+                }
+            ],  # small box 1
+
+            [
+                {
+                    'winner': None,
+                    'winner_tuple': None
+
+                }
+            ]  # small box 2
+        ],  # big row zero
+
+        [
+            [
+                {
+                    'winner': None,
+                    'winner_tuple': None
+
+                }
+            ],  # small box 0
+
+            [
+                {
+                    'winner': None,
+                    'winner_tuple': None
+
+                }
+            ],  # small box 1
+
+            [
+                {
+                    'winner': None,
+                    'winner_tuple': None
+
+                }
+            ]  # small box 2
+        ],  # big row one
+
+        [
+            [
+                {
+                    'winner': None,
+                    'winner_tuple': None
+
+                }
+            ],  # small box 0
+
+            [
+                {
+                    'winner': None,
+                    'winner_tuple': None
+
+                }
+            ],  # small box 1
+
+            [
+                {
+                    'winner': None,
+                    'winner_tuple': None
+
+                }
+            ]  # small box 2
+        ]  # big row two
+    ]
+
     return usedBoxes, winner_records
 
 
@@ -994,7 +1097,7 @@ def dehighlight(mainBoard, row, column):
     # redraw symbols
     redraw(mainBoard, row, column)
     # for now, come back after its safe
-    if winner_records[row][column][0]['winner'] is not None:
+    if winner_records[row][column][0]['winner'] is not None and winner_records[row][column][0]['winner'] != 'tie':
         highlightWin(mainBoard, row, column,
                      winner_records[row][column][0]['winner_tuple'][0],
                      winner_records[row][column][0]['winner_tuple'][1],
@@ -1065,13 +1168,35 @@ def redraw(board, row, column):
                 # done
 
 
+def drawWinner(smallFont, mega_winner):
+    """
+
+    :param mega_winner:
+    :return:
+    """
+    if mega_winner == 'tie':
+        message = smallFont.render('The Game resulted in a TIE', True, COMBLUE, BGCOLOR)
+
+    elif mega_winner == 'X':
+        message = smallFont.render('Winner is Player 1 ( X )', True, COMBLUE, BGCOLOR)
+
+    elif mega_winner == 'O':
+        message = smallFont.render('Winner is Player 2 ( O )', True, COMBLUE, BGCOLOR)
+
+    messageRect = message.get_rect()
+
+    messageRect.x = BOXSIZE * 5 - 10 + BOXSIZE
+    messageRect.y = BOXSIZE - 5 + BOXSIZE + 15
+    DISPLAYSURFACE.blit(message, messageRect)
+
+
 def drawScoreBoard(smallFont, playerScore, computerScore, tieScore):
     scoreBoard = smallFont.render(
-        'Player: ' + str(playerScore) + '     ' + 'Computer: ' + str(computerScore) + '      ' + 'Tie: ' + str(
+        'Player X : ' + str(playerScore) + '      ' + 'Player O : ' + str(computerScore) + '       ' + 'Tie: ' + str(
             tieScore), True, COMBLUE, BGCOLOR)
     scoreBoardRect = scoreBoard.get_rect()
-    scoreBoardRect.x = 0
-    scoreBoardRect.y = 0
+    scoreBoardRect.x = BOXSIZE * 4 + 21
+    scoreBoardRect.y = BOXSIZE - 5
     DISPLAYSURFACE.blit(scoreBoard, scoreBoardRect)
 
 
@@ -1121,21 +1246,6 @@ def getBoxAtPixel(x, y):
     #             return (boxx, boxy)
     # return (None, None)
 
-
-'''
-@:function : leftTopCoordsOfBox
-@:returns : The top left coordinates of a Small BOX
-@:approach : absolute pixel = X Margin + (box size + width) * box number
-
-'''
-
-'''
-def leftTopCoordsOfBox(boxx, boxy):
-
-    left = boxx * (BOXSIZE + GAPSIZE) + XMARGIN
-    top = boxy * (BOXSIZE + GAPSIZE) + YMARGIN
-    return left, top
-'''
 
 '''
 @:function : centerxAndCenteryOfBox
@@ -1199,21 +1309,6 @@ def markBox(row, column, box_row, box_column, mainFont, MARK):
     # BLIT(source,destination)
     DISPLAYSURFACE.blit(mark, markRect)
 
-
-'''
-Function : markBoxO
-Approach : Exactly same as markBoxX
-'''
-
-'''
-def markBoxO(boxx, boxy, mainFont):
-    centerx, centery = centerxAndCenteryOfBox(boxx, boxy)
-    mark = mainFont.render(OMARK, True, WHITE)
-    markRect = mark.get_rect()
-    markRect.centerx = centerx
-    markRect.centery = centery
-    DISPLAYSURFACE.blit(mark, markRect)
-'''
 
 '''
 @:Function : computerTurnWithAI
@@ -1530,4 +1625,3 @@ if __name__ == '__main__':
     # level = "smart"
     level = "easy"
     main(level)
-
