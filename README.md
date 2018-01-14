@@ -4,27 +4,36 @@ E3T - Extended Tic Tac Toe
 Extending the standard 3x3 tic tac toe to a 9x9 version with new rules.
 
 ## Development phase
-starting to manipulate and see what's possible.
+- [X] starting to manipulate and see what's possible.
+- Initial game screen - for New game. Do everything without exiting the app
+- difficulty level - easy, headon
+
+#### Two versions
+
+- [X] maximum score - easy level - just compare score and give answer - implementation done
+- [X] winner if 3 in a row - smart level - game early over - Implementation done  
 
 ## Todo List
 
-- [ ] Rename to Ultimate Tic tac toe
+- [X] Rename to Ultimate Tic tac toe
 - [X] Add a 3x3 prototype
 - [X] Document the prototype
-- [ ] Refer books, gain more pygame knowledge 
-- [ ] Define rules for new extended version
+- [X] Refer books, gain more pygame knowledge 
+- [X] Define rules for new extended version
 - [X] Define data structure
 - [X] Start coding
 - [X] Implement User 
 - [ ] Implement AI
-- [ ] Graphics prototype
+- [X] Graphics prototype
 - [ ] Implementing
 		- [X] small box win
 		- [X] winning Line graphics
-		- [ ] Big win - TO DO NEXT
-		- [ ] Big win line
+		- [X] Big win - TO DO NEXT
+		- [ ] ~~Big win line~~
 		- [ ] Game over
 		- [ ] Tie
+		- [ ] A `END GAME` button
+		- [ ] proper score manip 
 
 - [ ] clean up comments	
 - [ ] Brush up code PEP8 style

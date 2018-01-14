@@ -110,7 +110,7 @@ BGCOLOR = BLACK
 LINECOLOR = YELLOW
 
 
-def main():
+def main(level):
     # Initialise pygame to access all video modules
     pygame.init()
 
@@ -146,6 +146,12 @@ def main():
     playerScore = 0
     computerScore = 0
     tieScore = 0
+
+    # testing variables
+    playerScore = 3
+    computerScore = 6
+    tieScore = 0
+
     playerWins = False
     computerWins = False
 
@@ -168,7 +174,7 @@ def main():
     '''
     # Main board variable
     # change its name to initialise....
-    mainBoard, winner_records = makeEachBoxFalse(False)
+    mainBoard, winner_records = initialise_new_game(False)
     # Initially used boxes
     # usedBoxes = makeEachBoxFalse(False)
 
@@ -185,6 +191,8 @@ def main():
     game_turn = 'player'
     expected_row = None
     expected_column = None
+
+    game_done = False
 
     while True:
 
@@ -214,6 +222,9 @@ def main():
                 mousex, mousey = event.pos
                 mouseClicked = True
 
+            if game_done is True:
+                mouseClicked = False
+
         '''
         @:purpose : when mouse is clicked, we need to put X or O at the correct box
         So to obtain the exact box where the mouse is clicked, this function is used.
@@ -235,7 +246,7 @@ def main():
                 and row is not None and column is not None:
 
             if expected_row == 'any' and expected_column == 'any':
-                if winner_records[row][column][0]['winner'] != None:
+                if winner_records[row][column][0]['winner'] is not None:
                     row = None
                     column = None
 
@@ -308,7 +319,7 @@ def main():
                         pygame.time.wait(500)
                         highlightWin(mainBoard, row, column, b1, b2, b3)
                         BEEP3.play()
-                        winner_records[row][column][0]['winner'] = 'player'
+                        winner_records[row][column][0]['winner'] = 'X'
                         winner_records[row][column][0]['winner_tuple'] = (b1, b2, b3)
                         pygame.display.update()
 
@@ -317,7 +328,7 @@ def main():
                         pygame.time.wait(500)
                         highlightWin(mainBoard, row, column, b1, b2, b3)
                         BEEP3.play()
-                        winner_records[row][column][0]['winner'] = 'player'
+                        winner_records[row][column][0]['winner'] = 'O'
                         winner_records[row][column][0]['winner_tuple'] = (b1, b2, b3)
                         pygame.display.update()
 
@@ -354,11 +365,166 @@ def main():
         # Render the updated graphics on screen
         pygame.display.update()
 
+        # start here for MAJOR Line
+
+        if level == "easy":
+            mega_winner = checkMegaWinEasy(mainBoard, winner_records)
+
+            # // check who wins and alos tue
+            if mega_winner is not None:
+                if mega_winner == 'tie':
+                    # fill bg black and etc display
+                    # tie display on screen
+                    game_done = True
+                    # pass
+                else:
+                    for row in range(3):
+                        for col in range(3):
+                            if winner_records[row][col][0]['winner'] == mega_winner:
+                                highlight(mainBoard, row, col, RED)
+                            else:
+                                dehighlight(mainBoard, row, col)
+
+
+        elif level == "smart":
+            mega_winner, mb1, mb2, mb3 = checkMegaWinHeadOn(mainBoard, winner_records)
+
+            if mega_winner is not None:
+                if mega_winner == 'tie':
+                    # fill bg black and etc display
+                    # tie display on screen
+                    game_done = True
+                    # pass
+                else:
+                    highlightMegaWin(mainBoard, mega_winner, mb1, mb2, mb3)
+                    game_done = True
+
+        # Render the updated graphics on screen
+        pygame.display.update()
+
         # Tick the CLOCK
         FPSCLOCK.tick(FPS)
 
 
 ###### Functions to set up the board  #########
+
+"""
+:objective: highlight the mega win
+"""
+
+def highlightMegaWin(mainBoard, mega_winner, mb1, mb2, mb3):
+    """
+
+    :param mainBoard:
+    :param mega_winner:
+    :param mb1:
+    :param mb2:
+    :param mb3:
+    :return:
+    """
+    for row in range(3):
+        for col in range(3):
+            dehighlight(mainBoard, row, col)
+
+    highlight(mainBoard, mb1[0], mb1[1], RED)
+    highlight(mainBoard, mb2[0], mb2[1], RED)
+    highlight(mainBoard, mb3[0], mb3[1], RED)
+
+
+
+
+
+
+def checkMegaWinEasy(mainBoard, winner_records):
+    """
+
+    :param mainBoard:
+    :param winner_records:
+    :return:
+    """
+    mega_winner = None
+    player, computer, tie = 0, 0, 0
+
+    for row in range(3):
+        for col in range(3):
+            boxStatus = winner_records[row][col][0]['winner']
+
+            if boxStatus is None:
+                return mega_winner
+
+            if boxStatus == 'X':
+                player += 1
+            elif boxStatus == 'O':
+                computer += 1
+            elif boxStatus == 'tie':
+                tie += 1
+
+    if player == computer :
+        mega_winner = 'tie'
+    elif player > computer:
+        mega_winner = 'X'
+    elif computer > player:
+        mega_winner = 'O'
+
+    return mega_winner
+
+"""
+@objective : returns true if game cannot continue
+"""
+
+
+def checkMegaWinHeadOn(mainBoard, winner_records):
+    """
+
+    :param mainBoard:
+    :param winner_records:
+    :return:
+    """
+    mega_winner, mb1, mb2, mb3 = None, None, None, None
+
+    possible_cases = [
+        # rows
+        ((0, 0), (0, 1), (0, 2)),
+        ((1, 0), (1, 1), (1, 2)),
+        ((2, 0), (2, 1), (2, 2)),
+
+        # columns
+        ((0, 0), (1, 0), (2, 0)),
+        ((0, 1), (1, 1), (2, 1)),
+        ((0, 2), (1, 2), (2, 2)),
+
+        # diagnoals
+        ((0, 0), (1, 1), (2, 2)),
+        ((0, 2), (1, 1), (2, 0))
+
+    ]
+
+    for ((i1, j1), (i2, j2), (i3, j3)) in possible_cases:
+
+        if 'X' == winner_records[i1][j1][0]['winner'] \
+                == winner_records[i2][j2][0]['winner'] \
+                == winner_records[i3][j3][0]['winner']:
+            mega_winner = 'X'
+            mb1 = (i1, j1)
+            mb2 = (i2, j2)
+            mb3 = (i3, j3)
+            break
+
+        elif 'O' == winner_records[i1][j1][0]['winner'] \
+                == winner_records[i2][j2][0]['winner'] \
+                == winner_records[i3][j3][0]['winner']:
+            mega_winner = 'O'
+            mb1 = (i1, j1)
+            mb2 = (i2, j2)
+            mb3 = (i3, j3)
+            break
+
+    return mega_winner, mb1, mb2, mb3
+
+
+
+
+
 
 '''
 @objective : draw the lines that appear in the main board
@@ -457,39 +623,14 @@ For each Row one sublist, one sublist represents columns
 '''
 
 
-def makeEachBoxFalse(val):
+def initialise_new_game(val):
     """
-    Time to modify you my friend
-
-    Initially it was this,
-    [
-        [False, False, False],
-        [False, False, False],
-        [False, False, False]
-    ]
-
-    Not wanna make this ->>>
-    [
-    [ False, False, False, False, False, False, False, False, False ],
-    [ False, False, False, False, False, False, False, False, False ],
-    [ False, False, False, False, False, False, False, False, False ],
-    [ False, False, False, False, False, False, False, False, False ],
-    [ False, False, False, False, False, False, False, False, False ],
-    [ False, False, False, False, False, False, False, False, False ],
-    [ False, False, False, False, False, False, False, False, False ],
-    [ False, False, False, False, False, False, False, False, False ],
-    [ False, False, False, False, False, False, False, False, False ]
-    ]
-
-    But this - data structure variable
-
-
     :param val:
     :return:
     """
 
     # convert it to looping structure
-    data_structure_required = [
+    board_structure = [
         [
             [
                 [False, False, False],  # small box row 0
@@ -550,8 +691,7 @@ def makeEachBoxFalse(val):
             ]  # small box 2
         ]  # big row two
     ]
-
-    winner_records = [
+    winner_records_structure = [
         [
             [
                 {
@@ -631,13 +771,140 @@ def makeEachBoxFalse(val):
         ]  # big row two
     ]
 
-    usedBoxes = []
-    usedBoxes = copy.deepcopy(data_structure_required)
-    '''for i in range(BOARDWIDTH):
-        # append a list
-        usedBoxes.append([val] * BOARDHEIGHT)
-    # Return a list of lists
-    '''
+    # convert it to looping structure
+    usedBoxes = [
+        [
+            [
+                ['X', False, False],  # small box row 0
+                [False, 'X', False],  # small box row 1
+                [False, False, 'X']  # small box row 2
+            ],  # small box 0
+
+            [
+                [False, False, 'O'],  # small box row 0
+                [False, False, 'O'],  # small box row 1
+                [False, False, 'O']  # small box row 2
+            ],  # small box 1
+
+            [
+                ['O', False, False],  # small box row 0
+                [False, 'O', False],  # small box row 1
+                [False, False, 'O']  # small box row 2
+            ]  # small box 2
+        ],  # big row zero
+
+        [
+            [
+                ['X', False, False],  # small box row 0
+                [False, 'X', False],  # small box row 1
+                [False, False, 'X']  # small box row 2
+            ],  # small box 0
+
+            [
+                [False, False, 'O'],  # small box row 0
+                [False, False, 'O'],  # small box row 1
+                [False, False, 'O']  # small box row 2
+            ],  # small box 1
+
+            [
+                ['O', False, False],  # small box row 0
+                [False, 'O', False],  # small box row 1
+                [False, False, 'O']  # small box row 2
+            ]  # small box 2
+        ],  # big row zero
+        [
+            [
+                [False, False, False],  # small box row 0
+                [False, False, False],  # small box row 1
+                [False, False, False]  # small box row 2
+            ],  # small box 0
+
+            [
+                [False, False, False],  # small box row 0
+                [False, False, False],  # small box row 1
+                [False, False, False]  # small box row 2
+            ],  # small box 0
+
+            [
+                [False, False, False],  # small box row 0
+                [False, False, False],  # small box row 1
+                [False, False, False]  # small box row 2
+            ]  # small box 0
+        ]  # big row zero
+    ]
+    winner_records = [
+        [
+            [
+                {
+                    'winner': 'X',
+                    'winner_tuple': [[0, 0], [1, 1], [2, 2]]
+                },
+            ],  # small box 0
+
+            [
+                {
+                    'winner': 'O',
+                    'winner_tuple': [[0, 2], [1, 2], [2, 2]]
+
+                }
+            ],  # small box 1
+
+            [
+                {
+                    'winner': 'O',
+                    'winner_tuple': [[0, 0], [1, 1], [2, 2]]
+
+                }
+            ]  # small box 2
+        ],  # big row zero
+        [
+            [
+                {
+                    'winner': 'X',
+                    'winner_tuple': [[0, 0], [1, 1], [2, 2]]
+                },
+            ],  # small box 0
+
+            [
+                {
+                    'winner': 'O',
+                    'winner_tuple': [[0, 2], [1, 2], [2, 2]]
+
+                }
+            ],  # small box 1
+
+            [
+                {
+                    'winner': 'O',
+                    'winner_tuple': [[0, 0], [1, 1], [2, 2]]
+
+                }
+            ]  # small box 2
+        ],  # big row zero
+        [
+            [
+                {
+                    'winner': None,
+                    'winner_tuple': None
+                },
+            ],  # small box 0
+
+            [
+                {
+                    'winner': None,
+                    'winner_tuple': None
+                },
+            ],  # small box 0
+
+            [
+                {
+                    'winner': None,
+                    'winner_tuple': None
+                },
+            ]  # small box 0
+        ]  # big row zero
+    ]
+
     return usedBoxes, winner_records
 
 
@@ -761,7 +1028,7 @@ def highlight(mainBoard, row, column, color):
     width = 3 * (BOXSIZE + GAPSIZE)
     height = 3 * (BOXSIZE + GAPSIZE)
 
-    highlight_box_color = (140, 255, 26)
+    # highlight_box_color = (140, 255, 26)
     horizRect1 = pygame.Rect(left, top, width, height)
 
 
@@ -890,7 +1157,7 @@ def centerxAndCenteryOfBox(boxx, boxy):
 Functions to mark X and O in the main board
 approach : 
 1. render the mark surface from X
-2. Obtain its rectangle
+2. Obtain its rectangle 
 3. relocate the rectangle to correct small box
 4. BLIZ the original mark over this relocated rectangle
 '''
@@ -1128,7 +1395,7 @@ If no space left, it is a game over
 '''
 
 
-def gameOver(usedBoxes, mainBoard):
+def gameOver(mainBoard):
     for row in range(BIGBOXSIZE):
         for column in range(BIGBOXSIZE):
             for box_row in range(BIGBOXSIZE):
@@ -1155,7 +1422,7 @@ Resets the game
 
 def boardReset(mainBoard, playerTurnDone, playerWins, computerWins):
     pygame.time.wait(1000)
-    mainBoard, winner_records = makeEachBoxFalse(False)
+    mainBoard, winner_records = initialise_new_game(False)
     playerTurnDone = False
     playerWins = computerWins = False
 
@@ -1260,4 +1527,7 @@ def uncoverWords(text, textRect):
 
 
 if __name__ == '__main__':
-    main()
+    # level = "smart"
+    level = "easy"
+    main(level)
+
