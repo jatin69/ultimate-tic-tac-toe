@@ -11,6 +11,18 @@ mark -> dehighlight -> pause -> line -> pause -> highlight others
 ## effect achieved
 
 all working in player -> also update computer once ready
+NEXT GOALs ->>
+
+Implement big join - mega win
+- commit
+clean up code a bit -> removing extra comments 
+analyse timings -> do as required 
+commit --
+see function independencies -> experiment some shit
+set game_loop.md as per it
+
+
+
 
 """
 
@@ -201,6 +213,8 @@ def main():
 
         # did the player move
         moved = False
+        mousex, mousey = None, None
+        row, column, box_row, box_column = (None, None, None, None)
 
         # Check for events for event queue
         for event in pygame.event.get():
@@ -224,7 +238,10 @@ def main():
         So to obtain the exact box where the mouse is clicked, this function is used.
         @:returns: The box coordinates, where mouse is clicked
         '''
-        row, column, box_row, box_column = getBoxAtPixel(mousex, mousey)
+        if mousex is not None and mousey is not None:
+            row, column, box_row, box_column = getBoxAtPixel(mousex, mousey)
+
+
         # correct here, perfect
         # print(row, column, box_row, box_column)
 
@@ -235,33 +252,33 @@ def main():
         # This code just highlights
         # actual law enforcement must be done
 
-        #
-        # # mouse is clicked + not first time
-        # if mouseClicked and expected_column is not None and expected_row is not None:
-        #
-        #     if expected_row == 'any' and expected_column == 'any':
-        #         if winner_records[row][column][0]['winner'] != None:
-        #             row = None
-        #             column = None
-        #         # for i in range(3):
-        #         #     for j in range(3):
-        #         #         # match entered row and stuff
-        #         #         if row == i and column == j:
-        #         #             # If not a non winner - reject
-        #         #             if winner_records[i][j][0]['winner'] != None:
-        #         #                 row = None
-        #         #                 column = None
-        #         #                 # matched with clicked box
-        #
-        #
-        #
-        #     # + row does not match expected
-        #     elif (row != expected_row or column != expected_column):
-        #         row = None
-        #         column = None
-        #         pygame.display.update()
-        #         highlight(mainBoard, expected_row, expected_column, GREEN)
-        #
+
+        # mouse is clicked + not first time
+        if mouseClicked and expected_column is not None and expected_row is not None and row is not None and column is not None:
+
+            if expected_row == 'any' and expected_column == 'any':
+                if winner_records[row][column][0]['winner'] != None:
+                    row = None
+                    column = None
+                # for i in range(3):
+                #     for j in range(3):
+                #         # match entered row and stuff
+                #         if row == i and column == j:
+                #             # If not a non winner - reject
+                #             if winner_records[i][j][0]['winner'] != None:
+                #                 row = None
+                #                 column = None
+                #                 # matched with clicked box
+
+
+
+            # + row does not match expected
+            elif (row != expected_row or column != expected_column):
+                row = None
+                column = None
+                pygame.display.update()
+                highlight(mainBoard, expected_row, expected_column, GREEN)
+
                 # print(row, column)
 
         # If Inside the board, move forward, else ignore
@@ -275,8 +292,8 @@ def main():
                 pygame.display.update()
                 # Player turn done
 
-                game_turn = 'player'
-                # game_turn = 'computer'
+                # game_turn = 'player'
+                game_turn = 'computer'
 
                 expected_row = box_row
                 expected_column = box_column
@@ -351,8 +368,8 @@ def main():
                         for j in range(3):
                             if winner_records[i][j][0]['winner'] is None:
                                 highlight(mainBoard, i, j, GREEN)
-                            else:
-                                dehighlight(mainBoard, i, j)
+                            # else:
+                            #     dehighlight(mainBoard, i, j)
 
 
                 else:
@@ -473,8 +490,8 @@ def main():
                             for j in range(3):
                                 if winner_records[i][j][0]['winner'] is None:
                                     highlight(mainBoard, i, j, GREEN)
-                                else:
-                                    dehighlight(mainBoard, i, j)
+                                # else:
+                                #     dehighlight(mainBoard, i, j)
 
 
                 else:
@@ -1124,6 +1141,10 @@ Iterate over each possible SMALL BOX, derive its top left coordinates
 # Needs to be modified with respect to new data structure
 # But does not interfere
 def getBoxAtPixel(x, y):
+
+    if x is None or y is None:
+        return (None, None, None, None)
+
     for row in range(BIGBOXSIZE):
         for column in range(BIGBOXSIZE):
             for box_row in range(BIGBOXSIZE):
