@@ -109,6 +109,15 @@ BGCOLOR = BLACK
 # The line which joins 3 consecutive elements at the end
 LINECOLOR = YELLOW
 
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 def main(level):
     # Initialise pygame to access all video modules
@@ -157,15 +166,15 @@ def main(level):
 
     # sounds
     # sound of Player move
-    BEEP1 = pygame.mixer.Sound('beep2.ogg')
+    BEEP1 = pygame.mixer.Sound(resource_path("assets/beep2.ogg"))
     # sound of computer move
-    BEEP2 = pygame.mixer.Sound('beep3.ogg')
+    BEEP2 = pygame.mixer.Sound(resource_path("assets/beep3.ogg"))
 
     # Winning sound of any player
-    BEEP3 = pygame.mixer.Sound('beep1.ogg')
+    BEEP3 = pygame.mixer.Sound(resource_path("assets/beep1.ogg"))
 
     # computer voice at the end of game
-    COMPUTERVOICE = pygame.mixer.Sound('wargamesclip.ogg')
+    COMPUTERVOICE = pygame.mixer.Sound(resource_path("assets/wargamesclip.ogg"))
 
     '''
     Defines the major data structure 

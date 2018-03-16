@@ -1,6 +1,11 @@
 # E3T
 E3T - Extended Tic Tac Toe
 
+
+## Build options
+ 
+use this wonderful pyinstaller wrapper app [auto-py-to-exe](https://github.com/brentvollebregt/auto-py-to-exe) and make a single file in no console mode & bundle up all your resources in a single folder say `files`.
+
 Extending the standard 3x3 tic tac toe to a 9x9 version with new rules.
 
 ## Development phase
