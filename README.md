@@ -4,7 +4,10 @@ A pygame implementation of the ultimate tic tac toe.
 
 [Ultimate Tic Tac Toe](https://en.wikipedia.org/wiki/Ultimate_tic-tac-toe) or the extended tic tac toe is an extension of the standard 3x3 tic tac toe which is composed of nine tic-tac-toe boards arranged in a 3-by-3 grid.
 
-Download the game exe file from [github releases](https://github.com/jatin69/ultimate-tic-tac-toe/releases).
+## Playing the game
+
+- For windows - Simply, download the game exe file from [github releases](https://github.com/jatin69/ultimate-tic-tac-toe/releases). The exe can be run independently in windows.
+- For Linux systems - Checkout the [Dev section](https://github.com/jatin69/ultimate-tic-tac-toe/#dev) to see how to run the project.
 
 ## About the current implementation
 

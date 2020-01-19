@@ -5,7 +5,7 @@ components.png
 *.html
 .vscode
 *.exe
-# Pipfile.lock
+Pipfile.lock
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
