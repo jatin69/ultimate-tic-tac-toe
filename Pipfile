@@ -7,8 +7,10 @@ name = "pypi"
 
 [packages]
 
-Pygame = "==1.9.3"
+pygame = "==1.9.6"
 
 
 [dev-packages]
 
+"pep8" = "*"
+"autopep8" = "*"

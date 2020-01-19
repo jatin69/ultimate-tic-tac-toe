@@ -1,10 +1,6 @@
 # Dev Doc
 
-## Build options
-
-use this wonderful pyinstaller wrapper app [auto-py-to-exe](https://github.com/brentvollebregt/auto-py-to-exe) and make a single file in no console mode & bundle up all your resources in a single folder say `files`.
-
-- use `python -m pydoc -w tic_tac_toe` to generate documentation
+- use `python -m pydoc -w tic_tac_toe` to generate documentation if required
 
 ## Versions
 
@@ -28,11 +24,10 @@ use this wonderful pyinstaller wrapper app [auto-py-to-exe](https://github.com/b
 - [ ] ~~Big win line~~ Big Win color
 - [x] Tie Detection
 - [x] difficulty - easy and smart
-- [ ] Handle Key Presses
+- [x] Handle Key Presses
   - Press `Esc` to quit the application
-  - Press `Q` to terminate current game
-  - Press `N` to restart the game
-- [X] modify score card
+  - Press `ctrl + N` to restart the game
+- [x] modify score card
   - Player 1 ( X )
   - Player 2 ( O )
   - Tie
@@ -40,15 +35,16 @@ use this wonderful pyinstaller wrapper app [auto-py-to-exe](https://github.com/b
   - Winner is Player 2 ( O )
   - Font change maybe
   - space out a little
-- [X] Implement computer move
-   - [X] random
-   - [X] AI
-- [X] Refactor 'O' to Omark & 'X' to Xmark at all places
+- [x] Implement computer move
+  - [x] random
+  - [x] AI
+- [x] Refactor 'O' to Omark & 'X' to Xmark at all places
 - [ ] Setup Proper color scheme
 - [ ] Make more screens
   - [ ] Welcome screen
   - [ ] Choose Single Player (against AI) or Two Player
-  - [X] single game ~~vs tournament (keeping track of multiple games)~~
+  - [ ] single game ~~vs tournament (keeping track of multiple games)~~
+  - [ ] win streak
   - [ ] Exit bye bye screeen
 - [ ] Document code ( check out sphinx ) & clean up comments & Brush up code PEP8 style
 - [ ] Document complete game loop
@@ -62,6 +58,7 @@ use this wonderful pyinstaller wrapper app [auto-py-to-exe](https://github.com/b
 ## Additional points
 
 - ALso a possible data structure,, but will need to redefine my entire logic of finding coordinates,
+
 ```python
 theBoard = {'top-L': 'O', 'top-M': 'O', 'top-R': 'O',
             'mid-L': 'X', 'mid-M': 'X', 'mid-R': ' ',

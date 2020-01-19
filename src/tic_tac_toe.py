@@ -1,14 +1,18 @@
+# system imports
 import copy
 import os
-import pygame
 import random
 import sys
+import config
+
+# pygame imports
+import pygame
 from pygame.locals import *
 
-# CONSTANTS
+########################### CONSTANTS #########################
 
 # Game window width and height
-makeFullscreen = False
+makeFullscreen = config.makeFullscreen
 
 # Current Window coordinates
 WINDOWWIDTH = 800
@@ -104,7 +108,8 @@ def main(level, mode):
     if (makeFullscreen):
         # Get user's screen resolution
         user_info = pygame.display.Info()
-        DISPLAYSURFACE = pygame.display.set_mode((user_info.current_w, user_info.current_h), pygame.FULLSCREEN)
+        DISPLAYSURFACE = pygame.display.set_mode(
+            (user_info.current_w, user_info.current_h), pygame.FULLSCREEN)
     else:
         DISPLAYSURFACE = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
 
@@ -126,12 +131,19 @@ def main(level, mode):
     tieScore = 0
 
     # Sound Clips
-    BEEP1 = pygame.mixer.Sound(resource_path("assets/beep2.ogg"))  # sound of Player 1 move
-    BEEP2 = pygame.mixer.Sound(resource_path("assets/beep3.ogg"))  # sound of Player 2 move
-    BEEP3 = pygame.mixer.Sound(resource_path("assets/beep1.ogg"))  # Winning sound of any player
+
+    # sound of Player 1 move
+    BEEP1 = pygame.mixer.Sound(resource_path("assets/beep2.ogg"))
+
+    # sound of Player 2 move
+    BEEP2 = pygame.mixer.Sound(resource_path("assets/beep3.ogg"))
+
+    # Winning sound of any player
+    BEEP3 = pygame.mixer.Sound(resource_path("assets/beep1.ogg"))
 
     # computer voice at the end of game
-    COMPUTERVOICE = pygame.mixer.Sound(resource_path("assets/wargamesclip.ogg"))
+    COMPUTERVOICE = pygame.mixer.Sound(
+        resource_path("assets/wargamesclip.ogg"))
 
     '''
     Defines the major data structure 
@@ -143,7 +155,6 @@ def main(level, mode):
     mainBoard, winner_records = initialise_new_game(False)
     # Initially used boxes
     # usedBoxes = makeEachBoxFalse(False)
-
 
     # Paint the surface black
     DISPLAYSURFACE.fill(appBgColor)
@@ -177,6 +188,12 @@ def main(level, mode):
             if event.type == QUIT or (event.type == KEYUP and event.key == K_ESCAPE):
                 pygame.quit()
                 sys.exit()
+            
+            # For resya
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_n:
+                if pygame.key.get_mods() & pygame.KMOD_CTRL:
+                    main(config.level, config.mode)
+                    print("pressed: CTRL + A")
 
             # If mouse is moving, update the location
             # elif event.type == MOUSEMOTION:
@@ -188,6 +205,10 @@ def main(level, mode):
                 mouseClicked = True
 
             if game_done is True:
+                # not required because user can also win sometimes
+                # warGameEnding(smallFont, COMPUTERVOICE)
+                # pygame.time.wait(500)
+                # sys.exit()
                 mouseClicked = False
 
         '''
@@ -209,7 +230,9 @@ def main(level, mode):
         # insert AI move here
         if game_done == False and mode == "AI" and game_turn == "computer":
             pygame.time.wait(500)
-            row, column, box_row, box_column = computerTurnWithAI(mainBoard, winner_records, expected_row,
+            row, column, box_row, box_column = computerTurnWithAI(mainBoard,
+                                                                  winner_records,
+                                                                  expected_row,
                                                                   expected_column)
             mouseClicked = True
 
@@ -227,7 +250,8 @@ def main(level, mode):
                 row = None
                 column = None
                 pygame.display.update()
-                highlight(mainBoard, expected_row, expected_column, safeBoxColor)
+                highlight(mainBoard, expected_row,
+                          expected_column, safeBoxColor)
 
                 # print(row, column)
 
@@ -270,7 +294,8 @@ def main(level, mode):
                 if moved is True:
 
                     if winner_records[row][column][0]['winner'] is None:
-                        winner, b1, b2, b3 = smallGameWon(mainBoard, row, column)
+                        winner, b1, b2, b3 = smallGameWon(
+                            mainBoard, row, column)
                     else:
                         winner = winner_records[row][column][0]['winner']
                         b1 = winner_records[row][column][0]['winner_tuple'][0]
@@ -283,7 +308,8 @@ def main(level, mode):
                     if winner is 'tie':
                         tieScore += 1
                         winner_records[row][column][0]['winner'] = 'tie'
-                        winner_records[row][column][0]['winner_tuple'] = (b1, b2, b3)
+                        winner_records[row][column][0]['winner_tuple'] = (
+                            b1, b2, b3)
                         # in case of tie, b1 is none >>> handle later
 
                     elif winner is 'player':
@@ -292,7 +318,8 @@ def main(level, mode):
                         highlightWin(mainBoard, row, column, b1, b2, b3)
                         BEEP3.play()
                         winner_records[row][column][0]['winner'] = XMARK
-                        winner_records[row][column][0]['winner_tuple'] = (b1, b2, b3)
+                        winner_records[row][column][0]['winner_tuple'] = (
+                            b1, b2, b3)
                         # print(winner_records[row][column][0]['winner_tuple'])
                         pygame.display.update()
 
@@ -302,7 +329,8 @@ def main(level, mode):
                         highlightWin(mainBoard, row, column, b1, b2, b3)
                         BEEP3.play()
                         winner_records[row][column][0]['winner'] = OMARK
-                        winner_records[row][column][0]['winner_tuple'] = (b1, b2, b3)
+                        winner_records[row][column][0]['winner_tuple'] = (
+                            b1, b2, b3)
                         # print(winner_records[row][column][0]['winner_tuple'])
                         pygame.display.update()
 
@@ -329,7 +357,8 @@ def main(level, mode):
 
                 else:
                     # just green color
-                    highlight(mainBoard, expected_row, expected_column, safeBoxColor)
+                    highlight(mainBoard, expected_row,
+                              expected_column, safeBoxColor)
 
                 pygame.time.wait(500)
                 # pygame.display.update()
@@ -361,7 +390,8 @@ def main(level, mode):
                                 dehighlight(mainBoard, row, col)
 
         elif level == "smart":
-            mega_winner, mb1, mb2, mb3 = checkMegaWinHeadOn(mainBoard, winner_records)
+            mega_winner, mb1, mb2, mb3 = checkMegaWinHeadOn(
+                mainBoard, winner_records)
 
             if mega_winner is not None:
                 game_done = True
@@ -523,14 +553,16 @@ def drawLines():
     # DRAW 3 lines of BIG BOARD
     for line_no in range(3, BOARDSIZE, 3):
         #  horizontal rectangle needs to be drawn from top
-        horizRect1 = pygame.Rect(left, top + line_no * (BOXSIZE + GAPSIZE), width, height)
+        horizRect1 = pygame.Rect(
+            left, top + line_no * (BOXSIZE + GAPSIZE), width, height)
         pygame.draw.rect(DISPLAYSURFACE, safeBoxColor, horizRect1, 5)
 
     # DRAW 8 lines
     # for boundaries - change to range(0, BOARDSIZE+1)
     for line_no in range(0, BOARDSIZE + 1):
         #  horizontal rectangle needs to be drawn from top
-        horizRect1 = pygame.Rect(left, top + line_no * (BOXSIZE + GAPSIZE), width, height)
+        horizRect1 = pygame.Rect(
+            left, top + line_no * (BOXSIZE + GAPSIZE), width, height)
         pygame.draw.rect(DISPLAYSURFACE, WHITE, horizRect1)
 
     #######VERTICAL LINES########
@@ -541,13 +573,15 @@ def drawLines():
     # DRAW 3 lines of BIG BOARD
     for line_no in range(3, BOARDSIZE, 3):
         #  horizontal rectangle needs to be drawn from top
-        horizRect1 = pygame.Rect(left + line_no * (BOXSIZE + GAPSIZE), top, width, height)
+        horizRect1 = pygame.Rect(
+            left + line_no * (BOXSIZE + GAPSIZE), top, width, height)
         pygame.draw.rect(DISPLAYSURFACE, safeBoxColor, horizRect1, 5)
 
     # DRAW 8 lines
     for line_no in range(0, BOARDSIZE + 1):
         #  horizontal rectangle needs to be drawn from top
-        horizRect1 = pygame.Rect(left + line_no * (BOXSIZE + GAPSIZE), top, width, height)
+        horizRect1 = pygame.Rect(
+            left + line_no * (BOXSIZE + GAPSIZE), top, width, height)
         pygame.draw.rect(DISPLAYSURFACE, WHITE, horizRect1)
 
 
@@ -1144,13 +1178,16 @@ def drawWinner(smallFont, mega_winner):
     """
     message = ""
     if mega_winner == 'tie':
-        message = smallFont.render('The Game resulted in a TIE', True, COMBLUE, appBgColor)
+        message = smallFont.render(
+            'The Game resulted in a TIE', True, COMBLUE, appBgColor)
 
     elif mega_winner == XMARK:
-        message = smallFont.render('Winner is Player 1 ( X )', True, COMBLUE, appBgColor)
+        message = smallFont.render(
+            'Winner is Player 1 ( X )', True, COMBLUE, appBgColor)
 
     elif mega_winner == OMARK:
-        message = smallFont.render('Winner is Player 2 ( O )', True, COMBLUE, appBgColor)
+        message = smallFont.render(
+            'Winner is Player 2 ( O )', True, COMBLUE, appBgColor)
 
     messageRect = message.get_rect()
 
@@ -1208,8 +1245,10 @@ def getBoxAtPixel(x, y):
                     # left, top = leftTopCoordsOfBox(row, column, box_row, box_column)
 
                     # Reach BIG BOX + reach specific box inside it
-                    top = (YMARGIN + (3 * row) * (BOXSIZE + GAPSIZE)) + (box_row * (BOXSIZE + GAPSIZE))
-                    left = (XMARGIN + (3 * column) * (BOXSIZE + GAPSIZE)) + (box_column * (BOXSIZE + GAPSIZE))
+                    top = (YMARGIN + (3 * row) * (BOXSIZE + GAPSIZE)) + \
+                        (box_row * (BOXSIZE + GAPSIZE))
+                    left = (XMARGIN + (3 * column) * (BOXSIZE + GAPSIZE)
+                            ) + (box_column * (BOXSIZE + GAPSIZE))
 
                     boxRect = pygame.Rect(left, top, BOXSIZE, BOXSIZE)
                     if boxRect.collidepoint(x, y):
@@ -1263,8 +1302,10 @@ def markBox(row, column, box_row, box_column, mainFont, MARK):
 
     # find center of small box
     # Reach BIG BOX + reach specific box inside it
-    top = (YMARGIN + (3 * row) * (BOXSIZE + GAPSIZE)) + (box_row * (BOXSIZE + GAPSIZE))
-    left = (XMARGIN + (3 * column) * (BOXSIZE + GAPSIZE)) + (box_column * (BOXSIZE + GAPSIZE))
+    top = (YMARGIN + (3 * row) * (BOXSIZE + GAPSIZE)) + \
+        (box_row * (BOXSIZE + GAPSIZE))
+    left = (XMARGIN + (3 * column) * (BOXSIZE + GAPSIZE)) + \
+        (box_column * (BOXSIZE + GAPSIZE))
 
     # then go to center of box
     centerx = left + (BOXSIZE + GAPSIZE) // 2
@@ -1513,7 +1554,8 @@ def highlightWin(mainBoard, row, column, b1, b2, b3):
     left = (XMARGIN + (3 * column) * (BOXSIZE + GAPSIZE)) + \
            (box_column * (BOXSIZE + GAPSIZE)) + \
            ((BOXSIZE) // 2)
-    top = (YMARGIN + (3 * row) * (BOXSIZE + GAPSIZE)) + (box_row * (BOXSIZE + GAPSIZE)) + ((BOXSIZE) // 2)
+    top = (YMARGIN + (3 * row) * (BOXSIZE + GAPSIZE)) + \
+        (box_row * (BOXSIZE + GAPSIZE)) + ((BOXSIZE) // 2)
 
     endPos = (left, top)
 
@@ -1532,7 +1574,8 @@ def warGameEnding(smallFont, COMPUTERVOICE):
     DISPLAYSURFACE.fill(appBgColor)
 
     # Render text
-    computerMessage1 = smallFont.render('A strange game...', True, COMBLUE, appBgColor)
+    computerMessage1 = smallFont.render(
+        'A strange game...', True, COMBLUE, appBgColor)
     # Shift its rectangle to the position where you want the text
     computerMessage1Rect = computerMessage1.get_rect()
     computerMessage1Rect.x = XMARGIN / 3
@@ -1542,7 +1585,8 @@ def warGameEnding(smallFont, COMPUTERVOICE):
     uncoverWords(computerMessage1, computerMessage1Rect)
     pygame.time.wait(1000)
 
-    computerMessage2 = smallFont.render('The only winning move is not to play.', True, COMBLUE, appBgColor)
+    computerMessage2 = smallFont.render(
+        'The only winning move is not to play.', True, COMBLUE, appBgColor)
     computerMessage2Rect = computerMessage2.get_rect()
     computerMessage2Rect.x = XMARGIN / 3
     computerMessage2Rect.centery = (YMARGIN * 2) + 50
@@ -1569,7 +1613,7 @@ def uncoverWords(text, textRect):
         # draw text
         DISPLAYSURFACE.blit(text, textRect)
         # Draw a black rectangle over text
-        pygame.draw.rect(DISPLAYSURFACE, BLACK, blackRect)
+        pygame.draw.rect(DISPLAYSURFACE, appBgColor, blackRect)
         pygame.display.update()
         # Move the black triangle slowly away
         blackRect.x += revealSpeed
@@ -1577,8 +1621,4 @@ def uncoverWords(text, textRect):
 
 
 if __name__ == '__main__':
-    mode = "AI"
-    # mode = "Normal"
-    # level = "easy"
-    level = "smart"
-    main(level, mode)
+    main(config.level, config.mode)

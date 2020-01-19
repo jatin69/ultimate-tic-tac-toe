@@ -1,4 +1,11 @@
+# my py
+.mypy_cache/
 dist_packed_exe/
+components.png
+*.html
+.vscode
+*.exe
+# Pipfile.lock
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -98,9 +105,3 @@ ENV/
 
 # mkdocs documentation
 /site
-
-# mypy
-.mypy_cache/
-
-\.idea/
-components.png
